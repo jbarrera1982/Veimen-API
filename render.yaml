@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: veimen-api
+    runtime: docker
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false  # Configurar manualmente en el dashboard de Render
+      - key: Jwt__Secret
+        sync: false  # Configurar manualmente en el dashboard de Render

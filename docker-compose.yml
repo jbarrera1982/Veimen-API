@@ -1,0 +1,13 @@
+services:
+  veimen-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: veimen-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+      - Jwt__Secret=${JWT_SECRET}
+    restart: unless-stopped

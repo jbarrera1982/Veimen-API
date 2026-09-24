@@ -1,0 +1,204 @@
+@Veimen_API_HostAddress = http://localhost:5249
+
+###
+# Auth: login (captura los tokens para las demás peticiones)
+
+# @name login
+POST {{Veimen_API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jcb",
+  "password": "Aalj.001"
+}
+
+###
+
+@accessToken = {{login.response.body.$.accessToken}}
+@refreshToken = {{login.response.body.$.refreshToken}}
+
+###
+# Users: lista de usuarios (requiere permiso users.manage)
+
+GET {{Veimen_API_HostAddress}}/api/users
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+# Users: perfiles disponibles
+
+GET {{Veimen_API_HostAddress}}/api/users/profiles
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+# Users: crear usuario (el admin asigna el perfil)
+
+POST {{Veimen_API_HostAddress}}/api/users
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "username": "usuario_nuevo",
+  "email": "nuevo@veimen.net",
+  "password": "Password123",
+  "fullName": "Usuario Nuevo",
+  "profileId": 1
+}
+
+###
+
+# Users: actualizar perfil, nombre o estado
+
+PATCH {{Veimen_API_HostAddress}}/api/users/1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Nombre Actualizado",
+  "email": "actualizado@veimen.net",
+  "profileId": 2,
+  "active": true
+}
+
+###
+
+# Users: resetear contraseña
+
+POST {{Veimen_API_HostAddress}}/api/users/1/reset-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "newPassword": "NuevoPassword456"
+}
+
+###
+
+# Users: eliminar usuario
+
+DELETE {{Veimen_API_HostAddress}}/api/users/1
+Authorization: Bearer {{accessToken}}
+
+###
+# Auth: refresh
+
+POST {{Veimen_API_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+# Auth: me
+
+GET {{Veimen_API_HostAddress}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+###
+# Auth: permisos del usuario autenticado (perfil + acciones habilitadas)
+
+GET {{Veimen_API_HostAddress}}/api/auth/me/permissions
+Authorization: Bearer {{accessToken}}
+
+###
+# Auth: change-password
+
+POST {{Veimen_API_HostAddress}}/api/auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123",
+  "newPassword": "NuevoPassword456"
+}
+
+###
+# Auth: logout
+
+POST {{Veimen_API_HostAddress}}/api/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+# Prompts
+
+GET {{Veimen_API_HostAddress}}/api/prompts
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+GET {{Veimen_API_HostAddress}}/api/prompts/10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+
+POST {{Veimen_API_HostAddress}}/api/prompts
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "PROMPT_001",
+  "name": "Prompt de prueba",
+  "agentGroup": "AgenteA",
+  "systemPrompt": "Eres un asistente útil."
+}
+
+###
+
+PUT {{Veimen_API_HostAddress}}/api/prompts/1
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "promptId": 1,
+  "code": "PROMPT_001",
+  "name": "Prompt actualizado",
+  "agentGroup": "AgenteA",
+  "systemPrompt": "Eres un asistente muy útil."
+}
+
+###
+
+DELETE {{Veimen_API_HostAddress}}/api/prompts/1
+Authorization: Bearer {{accessToken}}
+
+###
+# ServiceRequests: lista paginada con filtros opcionales.
+# search busca en from y subject (wildcard con escapado) y en request_number (exacto si es numérico).
+
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests?page=1&pageSize=20&status=Received&search=cliente@empresa&start_date=20260101&end_date=20261231
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+# ServiceRequests: búsqueda por subject (wildcard)
+
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests?page=1&pageSize=20&search=solicitud
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+# ServiceRequests: dashboard (totales por día y status, filtros de fecha opcionales)
+
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests/dashboard?start_date=20260101&end_date=20261231
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+# ServiceRequests: traza de un requerimiento
+
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests/trace?request_number=202
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
