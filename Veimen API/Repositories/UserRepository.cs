@@ -104,18 +104,28 @@ public class UserRepository : IUserRepository
 
     public async Task<long> CreateAsync(User user)
     {
-        const string insertQuery = @"
-            INSERT INTO user (
-                username, email, password_hash, full_name, active, profile_id, created_at, updated_at
-            ) VALUES (
-                @Username, @Email, @PasswordHash, @FullName, @Active, @ProfileId, @CreatedAt, @UpdatedAt
-            )";
-
-        const string selectIdQuery = "SELECT LAST_INSERT_ID()";
+        const string query = @"
+        INSERT INTO user (
+            username, email, password_hash, full_name, active, profile_id, created_at, updated_at
+        ) VALUES (
+            @Username, @Email, @PasswordHash, @FullName, @Active, @ProfileId, @CreatedAt, @UpdatedAt
+        );
+        SELECT LAST_INSERT_ID();";
 
         using var connection = _context.CreateConnection();
-        await connection.ExecuteAsync(insertQuery, user);
-        return await connection.QuerySingleAsync<long>(selectIdQuery);
+
+        // QuerySingleAsync ejecutará ambos comandos y retornará el resultado del SELECT final
+        return await connection.QuerySingleAsync<long>(query, new
+        {
+            user.Username,
+            user.Email,
+            user.PasswordHash,
+            user.FullName,
+            user.Active,
+            user.ProfileId,
+            user.CreatedAt,
+            user.UpdatedAt,
+        });
     }
 
     public async Task<bool> UpdateLastLoginAsync(long id, DateTime lastLoginAt)
@@ -195,15 +205,6 @@ public class UserRepository : IUserRepository
         var affectedRows = await connection.ExecuteAsync(
             query,
             new { UserId = id, ProfileId = profileId, UpdatedAt = DateTime.UtcNow });
-        return affectedRows > 0;
-    }
-
-    public async Task<bool> DeleteAsync(long id)
-    {
-        const string query = "DELETE FROM user WHERE user_id = @UserId";
-
-        using var connection = _context.CreateConnection();
-        var affectedRows = await connection.ExecuteAsync(query, new { UserId = id });
         return affectedRows > 0;
     }
 }

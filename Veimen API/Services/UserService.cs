@@ -145,22 +145,6 @@ public class UserService : IUserService
         await _refreshTokenRepository.RevokeAllForUserAsync(id);
     }
 
-    public async Task DeleteAsync(long id, long currentUserId)
-    {
-        if (id == currentUserId)
-        {
-            throw new AuthException("No puedes eliminar tu propio usuario.", StatusCodes.Status400BadRequest);
-        }
-
-        var user = await _userRepository.GetByIdAsync(id);
-        if (user is null)
-        {
-            throw new AuthException("El usuario no existe.", StatusCodes.Status404NotFound);
-        }
-
-        await _userRepository.DeleteAsync(id);
-    }
-
     private async Task<ManagedUserDto> GetManagedOrThrowAsync(long id)
     {
         var users = await _managedUserRepository.ListAsync();

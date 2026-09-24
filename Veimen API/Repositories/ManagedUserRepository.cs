@@ -32,7 +32,7 @@ public class ManagedUserRepository : IManagedUserRepository
                    u.created_at AS CreatedAt
             FROM user u
             LEFT JOIN profile p ON p.profile_id = u.profile_id
-            ORDER BY u.username";
+            ORDER BY u.active DESC, u.username";
 
         using var connection = _context.CreateConnection();
         var rows = await connection.QueryAsync<ManagedUserDto>(query);

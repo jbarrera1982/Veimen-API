@@ -9,5 +9,4 @@ public interface IUserService
     Task<ManagedUserDto> CreateAsync(CreateUserRequest request);
     Task<ManagedUserDto> UpdateAsync(long id, UpdateUserRequest request, long currentUserId);
     Task ResetPasswordAsync(long id, string newPassword);
-    Task DeleteAsync(long id, long currentUserId);
 }

@@ -94,26 +94,6 @@ public class UsersController : ControllerBase
         }
     }
 
-    [HttpDelete("{id:long}")]
-    public async Task<IActionResult> Delete(long id)
-    {
-        var currentUserId = GetUserId();
-        if (currentUserId is null)
-        {
-            return Unauthorized();
-        }
-
-        try
-        {
-            await _userService.DeleteAsync(id, currentUserId.Value);
-            return NoContent();
-        }
-        catch (AuthException ex)
-        {
-            return StatusCode(ex.StatusCode, new { message = ex.Message });
-        }
-    }
-
     private long? GetUserId()
     {
         var sub = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
