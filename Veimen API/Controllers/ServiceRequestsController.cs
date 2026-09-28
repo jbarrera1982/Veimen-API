@@ -79,7 +79,7 @@ public class ServiceRequestsController : ControllerBase
     }
 
     [HttpGet("trace")]
-    [Authorize(Policy = Permissions.ServiceRequestsRead)]
+    [Authorize(Policy = Permissions.DashboardRead)]
     public async Task<ActionResult<IEnumerable<ServiceRequestTraceStep>>> GetTrace(
         [FromQuery(Name = "request_number")] long requestNumber)
     {
