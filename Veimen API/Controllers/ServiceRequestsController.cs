@@ -78,6 +78,27 @@ public class ServiceRequestsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("tokens")]
+    [Authorize(Policy = Permissions.TokensRead)]
+    public async Task<ActionResult<IEnumerable<ServiceRequestTokenUsageRow>>> GetTokenUsage(
+        [FromQuery(Name = "start_date")] string? startDateRaw,
+        [FromQuery(Name = "end_date")] string? endDateRaw)
+    {
+        if (!DateQueryParser.TryParse(startDateRaw, out var startDate)
+            || !DateQueryParser.TryParse(endDateRaw, out var endDate))
+        {
+            return BadRequest($"Formato de fecha inválido. Use '{DateQueryParser.Format}' (ej: 20260131).");
+        }
+
+        if (startDate.HasValue && endDate.HasValue && startDate > endDate)
+        {
+            return BadRequest("El parámetro 'start_date' no puede ser posterior a 'end_date'.");
+        }
+
+        var result = await _service.GetTokenUsageAsync(startDate, endDate);
+        return Ok(result);
+    }
+
     [HttpGet("trace")]
     [Authorize(Policy = Permissions.DashboardRead)]
     public async Task<ActionResult<IEnumerable<ServiceRequestTraceStep>>> GetTrace(

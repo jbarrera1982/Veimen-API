@@ -135,6 +135,46 @@ public class ServiceRequestRepository : IServiceRequestRepository
         return await connection.QueryAsync<ServiceRequestDashboardRow>(query, parameters);
     }
 
+    public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate)
+    {
+        // Consumo de tokens por día (end_date de la traza), agent y node. Solo nodos LLM.
+        // El filtro de fechas va sobre end_date directo (no DATE(end_date)) para no perder el índice;
+        // el DATE() se aplica recién en el GROUP BY para obtener el día.
+        var where = new StringBuilder(" WHERE node_type = 'LLM'");
+        var parameters = new DynamicParameters();
+
+        if (startDate.HasValue)
+        {
+            where.Append(" AND end_date >= @StartDate");
+            parameters.Add("StartDate", startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            // Cota exclusiva del día siguiente para incluir el día completo de end_date.
+            where.Append(" AND end_date < @EndDateExclusive");
+            parameters.Add("EndDateExclusive", endDate.Value.Date.AddDays(1));
+        }
+
+        // SUM() sobre columnas int devuelve DECIMAL en MySQL; el CAST a SIGNED hace que
+        // el resultado sea BIGINT y Dapper lo mapee exacto a long sin conversiones implícitas.
+        var query = $@"
+            SELECT
+                DATE(end_date) AS Date,
+                agent AS Agent,
+                node AS Node,
+                CAST(COALESCE(SUM(input_tokens), 0) AS SIGNED) AS InputTokens,
+                CAST(COALESCE(SUM(output_tokens), 0) AS SIGNED) AS OutputTokens,
+                CAST(COALESCE(SUM(total_tokens), 0) AS SIGNED) AS TotalTokens
+            FROM service_request_trace
+            {where}
+            GROUP BY DATE(end_date), agent, node
+            ORDER BY DATE(end_date), agent, node";
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<ServiceRequestTokenUsageRow>(query, parameters);
+    }
+
     public async Task<IEnumerable<ServiceRequestTraceStep>> GetTraceAsync(long requestNumber)
     {
         // Alias explícitos para que Dapper mapee snake_case a PascalCase.

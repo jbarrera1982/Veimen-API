@@ -32,6 +32,11 @@ public class ServiceRequestService : IServiceRequestService
         return await _repository.GetDashboardAsync(startDate, endDate);
     }
 
+    public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate)
+    {
+        return await _repository.GetTokenUsageAsync(startDate, endDate);
+    }
+
     public async Task<IEnumerable<ServiceRequestTraceStep>> GetTraceAsync(long requestNumber)
     {
         return await _repository.GetTraceAsync(requestNumber);

@@ -195,6 +195,14 @@ Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ###
+# ServiceRequests: consumo de tokens por día, agent y node (requiere permiso tokens.read).
+# Solo nodos LLM. El filtro de fechas se aplica sobre end_date de la traza.
+
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests/tokens?start_date=20260901&end_date=20260930
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
 # ServiceRequests: traza de un requerimiento
 
 GET {{Veimen_API_HostAddress}}/api/ServiceRequests/trace?request_number=202

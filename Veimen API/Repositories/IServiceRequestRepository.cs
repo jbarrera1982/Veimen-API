@@ -10,5 +10,7 @@ public interface IServiceRequestRepository
 
     Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(DateTime? startDate, DateTime? endDate);
 
+    Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate);
+
     Task<IEnumerable<ServiceRequestTraceStep>> GetTraceAsync(long requestNumber);
 }
