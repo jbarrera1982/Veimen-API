@@ -9,9 +9,7 @@ public class ServiceRequestTraceStep
 
     public int Sequence { get; set; }
 
-    public string? Node { get; set; }
-
-    public string? Agent { get; set; }
+    public string? Node { get; set; }    
 
     public string? NodeType { get; set; }
 

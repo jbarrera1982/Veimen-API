@@ -137,7 +137,7 @@ public class ServiceRequestRepository : IServiceRequestRepository
 
     public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate)
     {
-        // Consumo de tokens por día (end_date de la traza), agent y node. Solo nodos LLM.
+        // Consumo de tokens por día (end_date de la traza) y node. Solo nodos LLM.
         // El filtro de fechas va sobre end_date directo (no DATE(end_date)) para no perder el índice;
         // el DATE() se aplica recién en el GROUP BY para obtener el día.
         var where = new StringBuilder(" WHERE node_type = 'LLM'");
@@ -161,15 +161,14 @@ public class ServiceRequestRepository : IServiceRequestRepository
         var query = $@"
             SELECT
                 DATE(end_date) AS Date,
-                agent AS Agent,
                 node AS Node,
                 CAST(COALESCE(SUM(input_tokens), 0) AS SIGNED) AS InputTokens,
                 CAST(COALESCE(SUM(output_tokens), 0) AS SIGNED) AS OutputTokens,
                 CAST(COALESCE(SUM(total_tokens), 0) AS SIGNED) AS TotalTokens
             FROM service_request_trace
             {where}
-            GROUP BY DATE(end_date), agent, node
-            ORDER BY DATE(end_date), agent, node";
+            GROUP BY DATE(end_date), node
+            ORDER BY DATE(end_date), node";
 
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<ServiceRequestTokenUsageRow>(query, parameters);
@@ -185,7 +184,6 @@ public class ServiceRequestRepository : IServiceRequestRepository
                 request_number AS RequestNumber,
                 `sequence` AS Sequence,
                 node AS Node,
-                agent AS Agent,
                 node_type AS NodeType,
                 llm_model AS LlmModel,
                 prompt_version AS PromptVersion,
