@@ -137,7 +137,7 @@ public class ServiceRequestRepository : IServiceRequestRepository
 
     public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate)
     {
-        // Consumo de tokens por día (end_date de la traza) y node. Solo nodos LLM.
+        // Consumo de tokens por día (end_date de la traza), node y llm_model. Solo nodos LLM.
         // El filtro de fechas va sobre end_date directo (no DATE(end_date)) para no perder el índice;
         // el DATE() se aplica recién en el GROUP BY para obtener el día.
         var where = new StringBuilder(" WHERE node_type = 'LLM'");
@@ -162,13 +162,14 @@ public class ServiceRequestRepository : IServiceRequestRepository
             SELECT
                 DATE(end_date) AS Date,
                 node AS Node,
+                llm_model AS LlmModel,
                 CAST(COALESCE(SUM(input_tokens), 0) AS SIGNED) AS InputTokens,
                 CAST(COALESCE(SUM(output_tokens), 0) AS SIGNED) AS OutputTokens,
                 CAST(COALESCE(SUM(total_tokens), 0) AS SIGNED) AS TotalTokens
             FROM service_request_trace
             {where}
-            GROUP BY DATE(end_date), node
-            ORDER BY DATE(end_date), node";
+            GROUP BY DATE(end_date), node, llm_model
+            ORDER BY DATE(end_date), node, llm_model";
 
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<ServiceRequestTokenUsageRow>(query, parameters);
