@@ -1,7 +1,13 @@
 @Veimen_API_HostAddress = http://localhost:5249
 
 ###
-# Auth: login (captura los tokens para las demás peticiones)
+# CÓMO USAR ESTE ARCHIVO en Visual Studio:
+# 1. Enviá PRIMERO la petición "login" de abajo (enlace "Send Request").
+#    Visual Studio solo guarda la respuesta de una petición nombrada cuando vos la enviás:
+#    hasta ese momento {{login.response.body.$.accessToken}} no existe y se marca con error HTTP0012.
+# 2. Después enviá el resto de las peticiones: todas toman el token de la respuesta del login.
+# 3. El access token vive 15 minutos: cuando expire, volvé a enviar "login".
+#    Ojo: /api/auth/refresh rota el refresh token (el anterior queda revocado).
 
 # @name login
 POST {{Veimen_API_HostAddress}}/api/auth/login
@@ -13,31 +19,73 @@ Content-Type: application/json
 }
 
 ###
+# Auth: me (usuario del access token)
 
-@accessToken = {{login.response.body.$.accessToken}}
-@refreshToken = {{login.response.body.$.refreshToken}}
+GET {{Veimen_API_HostAddress}}/api/auth/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# Auth: me/permissions (perfil + permisos habilitados para el usuario autenticado)
+
+GET {{Veimen_API_HostAddress}}/api/auth/me/permissions
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# Auth: refresh (rota el refresh token; después de correrlo, usá {{refresh.response.body.$.accessToken}})
+
+# @name refresh
+POST {{Veimen_API_HostAddress}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.$.refreshToken}}"
+}
+
+###
+# Auth: change-password (OJO: cambia la contraseña del usuario "jcb"; después el login de arriba
+# deja de funcionar hasta que actualices la contraseña en la petición de login)
+
+POST {{Veimen_API_HostAddress}}/api/auth/change-password
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Aalj.001",
+  "newPassword": "NuevoPassword456"
+}
+
+###
+# Auth: logout (revoca el refresh token)
+
+POST {{Veimen_API_HostAddress}}/api/auth/logout
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.$.refreshToken}}"
+}
 
 ###
 # Users: lista de usuarios (requiere permiso users.manage)
 
 GET {{Veimen_API_HostAddress}}/api/users
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
-
 # Users: perfiles disponibles
 
 GET {{Veimen_API_HostAddress}}/api/users/profiles
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
-
 # Users: crear usuario (el admin asigna el perfil)
 
 POST {{Veimen_API_HostAddress}}/api/users
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -49,11 +97,10 @@ Content-Type: application/json
 }
 
 ###
-
 # Users: actualizar perfil, nombre o estado
 
 PATCH {{Veimen_API_HostAddress}}/api/users/1
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -64,11 +111,10 @@ Content-Type: application/json
 }
 
 ###
-
 # Users: resetear contraseña
 
 POST {{Veimen_API_HostAddress}}/api/users/1/reset-password
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -76,74 +122,30 @@ Content-Type: application/json
 }
 
 ###
-
 # Users: eliminar usuario
 
 DELETE {{Veimen_API_HostAddress}}/api/users/1
-Authorization: Bearer {{accessToken}}
-
-###
-# Auth: refresh
-
-POST {{Veimen_API_HostAddress}}/api/auth/refresh
-Content-Type: application/json
-
-{
-  "refreshToken": "{{refreshToken}}"
-}
-
-###
-# Auth: me
-
-GET {{Veimen_API_HostAddress}}/api/auth/me
-Authorization: Bearer {{accessToken}}
-
-###
-# Auth: permisos del usuario autenticado (perfil + acciones habilitadas)
-
-GET {{Veimen_API_HostAddress}}/api/auth/me/permissions
-Authorization: Bearer {{accessToken}}
-
-###
-# Auth: change-password
-
-POST {{Veimen_API_HostAddress}}/api/auth/change-password
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "currentPassword": "Password123",
-  "newPassword": "NuevoPassword456"
-}
-
-###
-# Auth: logout
-
-POST {{Veimen_API_HostAddress}}/api/auth/logout
-Authorization: Bearer {{accessToken}}
-Content-Type: application/json
-
-{
-  "refreshToken": "{{refreshToken}}"
-}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###
 # Prompts
 
 GET {{Veimen_API_HostAddress}}/api/prompts
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
+# Prompts: detalle
 
 GET {{Veimen_API_HostAddress}}/api/prompts/10
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
+# Prompts: crear
 
 POST {{Veimen_API_HostAddress}}/api/prompts
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -154,9 +156,10 @@ Content-Type: application/json
 }
 
 ###
+# Prompts: actualizar
 
 PUT {{Veimen_API_HostAddress}}/api/prompts/1
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -168,30 +171,31 @@ Content-Type: application/json
 }
 
 ###
+# Prompts: eliminar
 
 DELETE {{Veimen_API_HostAddress}}/api/prompts/1
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###
 # ServiceRequests: lista paginada con filtros opcionales.
 # search busca en from y subject (wildcard con escapado) y en request_number (exacto si es numérico).
 
 GET {{Veimen_API_HostAddress}}/api/ServiceRequests?page=1&pageSize=20&status=Received&search=cliente@empresa&start_date=20260101&end_date=20261231
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
 # ServiceRequests: búsqueda por subject (wildcard)
 
 GET {{Veimen_API_HostAddress}}/api/ServiceRequests?page=1&pageSize=20&search=solicitud
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
 # ServiceRequests: dashboard (totales por día y status, filtros de fecha opcionales)
 
 GET {{Veimen_API_HostAddress}}/api/ServiceRequests/dashboard?start_date=20260101&end_date=20261231
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
@@ -199,14 +203,31 @@ Accept: application/json
 # Solo nodos LLM. El filtro de fechas se aplica sobre end_date de la traza.
 
 GET {{Veimen_API_HostAddress}}/api/ServiceRequests/tokens?start_date=20260901&end_date=20260930
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
 # ServiceRequests: traza de un requerimiento
 
 GET {{Veimen_API_HostAddress}}/api/ServiceRequests/trace?request_number=202
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# Usage: costos de OpenAI en un período (requiere permiso usage.read).
+# start_date obligatorio (yyyyMMdd); end_date opcional e inclusivo (yyyyMMdd).
+# Devuelve la respuesta tal como la entrega la API de OpenAI (buckets por día).
+
+GET {{Veimen_API_HostAddress}}/api/usage/costs?start_date=20260901&end_date=20260930
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# Usage: consumo de completions de OpenAI en un período (requiere permiso usage.read).
+# Mismos parámetros que /api/usage/costs. Devuelve buckets por día con tokens por resultado.
+
+GET {{Veimen_API_HostAddress}}/api/usage/completions?start_date=20260901&end_date=20260930
+Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###

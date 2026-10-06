@@ -15,7 +15,7 @@ API REST en ASP.NET Core para Veimen. Gestiona prompts de LLM y autenticación d
 ```
 Veimen API/            → raíz del repo (solución .slnx, Dockerfile, docker-compose.yml)
 └── Veimen API/        → proyecto web
-    ├── Controllers/         → AuthController, PromptsController, ServiceRequestsController
+    ├── Controllers/         → AuthController, PromptsController, ServiceRequestsController, UsageController
     ├── Services/            → lógica de negocio (interfaces I*Service + implementaciones)
     ├── Repositories/        → acceso a datos (interfaces I*Repository + implementaciones Dapper)
     ├── Data/                → DapperContext (factory de conexiones MySQL)
@@ -54,8 +54,9 @@ No hay proyecto de tests actualmente.
   ```powershell
   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=...;Port=3306;Database=...;Uid=...;Pwd=...;" --project "Veimen API"
   dotnet user-secrets set "Jwt:Secret" "clave-aleatoria-de-al-menos-32-caracteres" --project "Veimen API"
+  dotnet user-secrets set "OpenAI:AdminApiKey" "sk-admin-..." --project "Veimen API"
   ```
-- **Producción / Docker**: variables de entorno con doble guion bajo (`ConnectionStrings__DefaultConnection`, `Jwt__Secret`). Se inyectan desde `.env` (copiar `.env.example` → `.env` y completar).
+- **Producción / Docker**: variables de entorno con doble guion bajo (`ConnectionStrings__DefaultConnection`, `Jwt__Secret`, `OpenAI__AdminApiKey`). Se inyectan desde `.env` (copiar `.env.example` → `.env` y completar).
 
 Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe tener **≥ 32 caracteres**; `Jwt:Issuer` y `Jwt:Audience` son obligatorios.
 
@@ -69,7 +70,7 @@ Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe 
 - Cambios de esquema: crear un nuevo script numerado en `Scripts/` (`00X_descripcion.sql`) y aplicarlo manualmente a la base de datos; no hay migraciones automáticas.
 - Los mensajes de error y comentarios del codebase están en **español**.
 - **Fechas en query string**: se reciben como `string` en formato **`yyyyMMdd`** (ej: `20260131`) y se parsean con `Helpers/DateQueryParser.TryParse` (parámetro ausente → `null`, sin filtro; formato inválido → responder 400). El `end_date` es **inclusivo**: el repositorio filtra con cota exclusiva del día siguiente (`end_date.Date.AddDays(1)`). Aplica a todo filtro de fecha de endpoints actuales y futuros.
-- **`Veimen API.http` siempre actualizado**: al crear o modificar métodos en cualquier controlador, actualiza el archivo `.http` **en el mismo cambio, sin que el usuario lo pida**: agrega la petición de ejemplo para endpoints nuevos (con todos sus parámetros de ruta, query y cuerpo) y ajusta las peticiones existentes si cambian ruta, parámetros o cuerpo.
+- **`Veimen API.http` siempre actualizado**: al crear o modificar métodos en cualquier controlador, actualiza el archivo `.http` **en el mismo cambio, sin que el usuario lo pida**: agrega la petición de ejemplo para endpoints nuevos (con todos sus parámetros de ruta, query y cuerpo) y ajusta las peticiones existentes si cambian ruta, parámetros o cuerpo. El cliente `.http` de **Visual Studio** solo guarda la respuesta de una petición nombrada cuando el usuario la envía manualmente: por eso el `login` va primero con `# @name login` y todas las peticiones restantes referencian el token **inline** (`Authorization: Bearer {{login.response.body.$.accessToken}}`), nunca mediante variables de archivo del tipo `@accessToken = {{login.response.body.$.accessToken}}` (esa forma anidada falla con `HTTP0012`).
 
 ## Endpoints principales
 
@@ -81,6 +82,8 @@ Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe 
 - `GET /api/ServiceRequests/dashboard` → totales agrupados por día (`receipt_date`) y `status` (requiere Bearer + policy `dashboard.read`). Filtros opcionales: `start_date`, `end_date` (formato `yyyyMMdd`, rango inclusivo sobre `receipt_date`); sin fechas devuelve todo el histórico. Devuelve lista plana `{ date, status, total }` ordenada cronológicamente.
 - `GET /api/ServiceRequests/trace` → traza de un requerimiento (requiere Bearer + policy `service-requests.read`). Parámetro obligatorio `request_number` (entero > 0); si es ≤ 0 responde 400. Devuelve lista plana de `ServiceRequestTraceStep` ordenada por `trace_id`. Las columnas JSON (`input_json`, `output_json`) y `confidence` se devuelven como string, por convención del proyecto.
 - `GET /api/ServiceRequests/tokens` → consumo de tokens por día, `node` y `llm_model` (requiere Bearer + policy `tokens.read`). Solo pasos con `node_type = 'LLM'`. Filtros opcionales: `start_date`, `end_date` (formato `yyyyMMdd`, rango inclusivo aplicado sobre `end_date` de la traza; sin fechas devuelve todo el histórico). Devuelve lista plana de `ServiceRequestTokenUsageRow` (`date`, `node`, `llmModel`, `inputTokens`, `outputTokens`, `totalTokens`) ordenada cronológicamente. `llmModel` puede ser `null` si la traza no registró modelo.
+- `GET /api/usage/costs` → costos del período consultados a la API de OpenAI (`GET /v1/organization/costs`), **no a la base de datos** (requiere Bearer + policy `usage.read`). Parámetros: `start_date` **obligatorio** (excepción a la convención: OpenAI exige `start_time`) y `end_date` opcional, ambos `yyyyMMdd`. Se envían a OpenAI como `start_time`/`end_time` en Unix seconds UTC (`end_date` inclusivo → cota exclusiva del día siguiente) con `bucket_width=1d` y `limit=365`, recorriendo la paginación de OpenAI. Devuelve la respuesta con el mismo formato de OpenAI (`{ object, data, has_more, next_page }` en snake_case, buckets por día con `results[].amount`). Requiere `OpenAI:AdminApiKey` configurado; errores de OpenAI responden 502 con el detalle.
+- `GET /api/usage/completions` → consumo de completions (tokens, requests) del período, desde `GET /v1/organization/usage/completions` de OpenAI (requiere Bearer + policy `usage.read`). Mismos parámetros, formato y manejo de errores que `/api/usage/costs`; los buckets traen `results[]` con `input_tokens`, `output_tokens`, `num_model_requests`, `model`, etc.
 - `GET /health` → health check (incluye check de base de datos)
 - OpenAPI: `/openapi/v1.json` (solo Development), con esquema de seguridad Bearer documentado
 
@@ -88,7 +91,7 @@ Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe 
 
 RBAC simple, administrado directamente en BD (no hay CRUD de perfiles): `user.profile_id` → `profile` → `profile_permission` → `permission` (script `002_create_profiles_tables.sql`; los seeds asignan todos los usuarios existentes al perfil Admin).
 
-- Los códigos de permiso viven en `Services/Permissions.cs` (`prompts.read`, `prompts.write`, `service-requests.read`, `dashboard.read`, `tokens.read`, `users.manage`). Los registros de la tabla `permission` deben coincidir con esas constantes.
+- Los códigos de permiso viven en `Services/Permissions.cs` (`prompts.read`, `prompts.write`, `service-requests.read`, `dashboard.read`, `tokens.read`, `users.manage`, `usage.read`). Los registros de la tabla `permission` deben coincidir con esas constantes.
 - `Program.cs` registra una policy por código: `RequireClaim(Permissions.ClaimType /* "perm" */, code)`.
 - `AuthService` carga los permisos del usuario en login/refresh (vía `IPermissionRepository`) y `TokenService` los emite como claims `perm` (+ claim `profile`) en el access token. Como el token vive 15 min, los cambios de permisos en BD aplican al siguiente refresh.
 - Los endpoints se protegen con `[Authorize(Policy = Permissions.Xxx)]` además del `[Authorize]` de clase. Un usuario sin perfil no obtiene claims y recibe 403.

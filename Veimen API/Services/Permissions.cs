@@ -17,7 +17,8 @@ public static class Permissions
     public const string DashboardRead = "dashboard.read";
     public const string TokensRead = "tokens.read";
     public const string UsersManage = "users.manage";
+    public const string UsageRead = "usage.read";
 
     public static readonly string[] All =
-        [PromptsRead, PromptsWrite, ServiceRequestsRead, DashboardRead, TokensRead, UsersManage];
+        [PromptsRead, PromptsWrite, ServiceRequestsRead, DashboardRead, TokensRead, UsersManage, UsageRead];
 }

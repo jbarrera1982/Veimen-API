@@ -39,6 +39,8 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
+// Typed client: UsageService llama a la API de OpenAI (no a la base de datos).
+builder.Services.AddHttpClient<IUsageService, UsageService>();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 builder.Services

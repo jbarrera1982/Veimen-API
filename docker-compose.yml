@@ -10,4 +10,5 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
       - Jwt__Secret=${JWT_SECRET}
+      - OpenAI__AdminApiKey=${OPENAI_ADMIN_KEY}
     restart: unless-stopped

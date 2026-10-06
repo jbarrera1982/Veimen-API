@@ -1,0 +1,121 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using Veimen_API.Exceptions;
+using Veimen_API.Models.Dtos;
+
+namespace Veimen_API.Services;
+
+// Consulta costos y consumo en la API de OpenAI (/v1/organization/...).
+// No usa repositorio: los datos viven en OpenAI, no en la base de datos.
+public class UsageService : IUsageService
+{
+    // Parámetros fijos pedidos a OpenAI: buckets de un día y hasta 365 buckets por página.
+    private const string BucketWidth = "1d";
+    private const int PageLimit = 365;
+
+    private readonly HttpClient _httpClient;
+    private readonly string _baseUrl;
+    private readonly string _adminApiKey;
+
+    public UsageService(HttpClient httpClient, IConfiguration configuration)
+    {
+        _httpClient = httpClient;
+        _baseUrl = (configuration["OpenAI:BaseUrl"] ?? "https://api.openai.com").TrimEnd('/');
+        _adminApiKey = configuration["OpenAI:AdminApiKey"] ?? string.Empty;
+    }
+
+    public Task<OpenAiPage<OpenAiCostResult>> GetCostsAsync(DateTime startDate, DateTime? endDate)
+        => GetAllPagesAsync<OpenAiCostResult>("costs", startDate, endDate);
+
+    public Task<OpenAiPage<OpenAiCompletionsUsageResult>> GetCompletionsUsageAsync(DateTime startDate, DateTime? endDate)
+        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", startDate, endDate);
+
+    private async Task<OpenAiPage<T>> GetAllPagesAsync<T>(string path, DateTime startDate, DateTime? endDate)
+    {
+        if (string.IsNullOrWhiteSpace(_adminApiKey))
+        {
+            throw new OpenAiException(
+                "'OpenAI:AdminApiKey' no está configurado. " +
+                "Configúrelo en User Secrets (dev) o en la variable de entorno 'OpenAI__AdminApiKey' (prod).",
+                StatusCodes.Status500InternalServerError);
+        }
+
+        // start_time es inclusivo; end_date llega inclusivo (convención del proyecto) y OpenAI
+        // espera end_time exclusivo, por eso se envía la medianoche UTC del día siguiente.
+        var startTime = ToUnixSeconds(startDate);
+        long? endTime = endDate.HasValue ? ToUnixSeconds(endDate.Value.AddDays(1)) : null;
+
+        // Se recorren todas las páginas de OpenAI para no truncar rangos mayores a PageLimit días.
+        var buckets = new List<OpenAiBucket<T>>();
+        string? pageCursor = null;
+        do
+        {
+            var page = await GetPageAsync<T>(path, startTime, endTime, pageCursor);
+            if (page.Data.Count > 0)
+            {
+                buckets.AddRange(page.Data);
+            }
+
+            pageCursor = page.HasMore && !string.IsNullOrEmpty(page.NextPage) ? page.NextPage : null;
+        }
+        while (pageCursor is not null);
+
+        return new OpenAiPage<T> { Data = buckets };
+    }
+
+    private async Task<OpenAiPage<T>> GetPageAsync<T>(string path, long startTime, long? endTime, string? pageCursor)
+    {
+        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={PageLimit}";
+        if (endTime.HasValue)
+        {
+            query += $"&end_time={endTime.Value}";
+        }
+        if (!string.IsNullOrEmpty(pageCursor))
+        {
+            query += $"&page={Uri.EscapeDataString(pageCursor)}";
+        }
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get, $"{_baseUrl}/v1/organization/{path}?{query}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _adminApiKey);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.SendAsync(request);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new OpenAiException($"No se pudo conectar con la API de OpenAI: {ex.Message}",
+                StatusCodes.Status502BadGateway);
+        }
+        catch (TaskCanceledException)
+        {
+            throw new OpenAiException("La API de OpenAI no respondió a tiempo (timeout).",
+                StatusCodes.Status504GatewayTimeout);
+        }
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                var detail = await response.Content.ReadAsStringAsync();
+                if (detail.Length > 300)
+                {
+                    detail = detail[..300];
+                }
+
+                throw new OpenAiException(
+                    $"La API de OpenAI respondió con error (HTTP {(int)response.StatusCode}): {detail}",
+                    StatusCodes.Status502BadGateway);
+            }
+
+            return await response.Content.ReadFromJsonAsync<OpenAiPage<T>>()
+                ?? new OpenAiPage<T>();
+        }
+    }
+
+    // Las fechas de query son fechas planas (convención del proyecto); se interpretan como UTC.
+    private static long ToUnixSeconds(DateTime date) =>
+        new DateTimeOffset(date.Date, TimeSpan.Zero).ToUnixTimeSeconds();
+}
