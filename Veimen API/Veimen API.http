@@ -137,7 +137,7 @@ Accept: application/json
 ###
 # Prompts: detalle
 
-GET {{Veimen_API_HostAddress}}/api/prompts/10
+GET {{Veimen_API_HostAddress}}/api/prompts/80
 Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 

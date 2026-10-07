@@ -13,12 +13,34 @@ public class PromptRepository : IPromptRepository
         _context = context;
     }
 
+    // Alias explícitos para que Dapper mapee snake_case a PascalCase (mismo patrón
+    // que UserRepository/ServiceRequestRepository): sin alias, prompt_id no llena PromptId.
+    private const string SelectColumns = @"
+        prompt_id AS PromptId,
+        secuence AS Secuence,
+        code AS Code,
+        name AS Name,
+        description AS Description,
+        agent_group AS AgentGroup,
+        type AS Type,
+        llm_model AS LlmModel,
+        version AS Version,
+        system_prompt AS SystemPrompt,
+        user_prompt AS UserPrompt,
+        temperature AS Temperature,
+        max_tokens AS MaxTokens,
+        active AS Active,
+        observations AS Observations,
+        created_by AS CreatedBy,
+        created_at AS CreatedAt,
+        updated_by AS UpdatedBy,
+        updated_at AS UpdatedAt,
+        schema_output AS SchemaOutput";
+
     public async Task<IEnumerable<Prompt>> GetAllAsync()
     {
-        const string query = @"
-            SELECT prompt_id, secuence, code, name, description, agent, agent_group, type,
-                   llm_model, version, system_prompt, user_prompt, temperature, max_tokens,
-                   active, observations, created_by, created_at, updated_by, updated_at, schema_output
+        var query = $@"
+            SELECT {SelectColumns}
             FROM prompt";
 
         using var connection = _context.CreateConnection();
@@ -27,10 +49,8 @@ public class PromptRepository : IPromptRepository
 
     public async Task<Prompt?> GetByIdAsync(long id)
     {
-        const string query = @"
-            SELECT prompt_id, secuence, code, name, description, agent, agent_group, type,
-                   llm_model, version, system_prompt, user_prompt, temperature, max_tokens,
-                   active, observations, created_by, created_at, updated_by, updated_at, schema_output
+        var query = $@"
+            SELECT {SelectColumns}
             FROM prompt
             WHERE prompt_id = @PromptId";
 
@@ -42,11 +62,11 @@ public class PromptRepository : IPromptRepository
     {
         const string insertQuery = @"
             INSERT INTO prompt (
-                secuence, code, name, description, agent, agent_group, type,
+                secuence, code, name, description, agent_group, type,
                 llm_model, version, system_prompt, user_prompt, temperature, max_tokens,
                 active, observations, created_by, created_at, updated_by, updated_at, schema_output
             ) VALUES (
-                @Secuence, @Code, @Name, @Description, @Agent, @AgentGroup, @Type,
+                @Secuence, @Code, @Name, @Description, @AgentGroup, @Type,
                 @LlmModel, @Version, @SystemPrompt, @UserPrompt, @Temperature, @MaxTokens,
                 @Active, @Observations, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt, @SchemaOutput
             )";
@@ -66,7 +86,6 @@ public class PromptRepository : IPromptRepository
                 code = @Code,
                 name = @Name,
                 description = @Description,
-                agent = @Agent,
                 agent_group = @AgentGroup,
                 type = @Type,
                 llm_model = @LlmModel,

@@ -27,10 +27,7 @@ public class Prompt
     [MaxLength(500)]
     public string? Description { get; set; }
 
-    [Column("agent")]
-    [MaxLength(100)]
-    public string? Agent { get; set; }
-
+    // La tabla no tiene columna `agent`: el nombre del agente vive en agent_group.
     [Column("agent_group")]
     [Required]
     [MaxLength(200)]
