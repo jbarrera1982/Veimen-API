@@ -15,8 +15,13 @@ public class UsageService : IUsageService
     private const int CostsPageLimit = 180;   // /v1/organization/costs: 1..180
     private const int UsagePageLimit = 31;    // /v1/organization/usage/completions: 1..31
 
-    // Ambos endpoints agrupan por API key: cada bucket devuelve un resultado por api_key_id.
+    // Agrupación: API key + la dimensión que muestra el frontend (model en
+    // completions, line_item en costs). OpenAI permite combinar group_by; si se
+    // agrupara SOLO por api_key_id, model/line_item llegarían null y se perdería
+    // el desglose actual de los dashboards (todo caería en la fila '—').
     private const string GroupBy = "api_key_id";
+    private const string GroupByModel = "model";
+    private const string GroupByLineItem = "line_item";
 
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
@@ -30,12 +35,13 @@ public class UsageService : IUsageService
     }
 
     public Task<OpenAiPage<OpenAiCostResult>> GetCostsAsync(DateTime startDate, DateTime? endDate)
-        => GetAllPagesAsync<OpenAiCostResult>("costs", CostsPageLimit, startDate, endDate);
+        => GetAllPagesAsync<OpenAiCostResult>("costs", CostsPageLimit, startDate, endDate, GroupBy, GroupByLineItem);
 
     public Task<OpenAiPage<OpenAiCompletionsUsageResult>> GetCompletionsUsageAsync(DateTime startDate, DateTime? endDate)
-        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", UsagePageLimit, startDate, endDate);
+        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", UsagePageLimit, startDate, endDate, GroupBy, GroupByModel);
 
-    private async Task<OpenAiPage<T>> GetAllPagesAsync<T>(string path, int pageLimit, DateTime startDate, DateTime? endDate)
+    private async Task<OpenAiPage<T>> GetAllPagesAsync<T>(
+        string path, int pageLimit, DateTime startDate, DateTime? endDate, params string[] groupBy)
     {
         if (string.IsNullOrWhiteSpace(_adminApiKey))
         {
@@ -55,7 +61,7 @@ public class UsageService : IUsageService
         string? pageCursor = null;
         do
         {
-            var page = await GetPageAsync<T>(path, pageLimit, startTime, endTime, pageCursor);
+            var page = await GetPageAsync<T>(path, pageLimit, startTime, endTime, pageCursor, groupBy);
             if (page.Data.Count > 0)
             {
                 buckets.AddRange(page.Data);
@@ -69,9 +75,11 @@ public class UsageService : IUsageService
     }
 
     private async Task<OpenAiPage<T>> GetPageAsync<T>(
-        string path, int pageLimit, long startTime, long? endTime, string? pageCursor)
+        string path, int pageLimit, long startTime, long? endTime, string? pageCursor, params string[] groupBy)
     {
-        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={pageLimit}&group_by={GroupBy}";
+        // OpenAI recibe group_by como parámetro repetido (en la doc es un array).
+        var groupByQuery = string.Join('&', groupBy.Select(g => $"group_by={g}"));
+        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={pageLimit}&{groupByQuery}";
         if (endTime.HasValue)
         {
             query += $"&end_time={endTime.Value}";
