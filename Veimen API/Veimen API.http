@@ -216,7 +216,7 @@ Accept: application/json
 ###
 # Usage: costos de OpenAI en un período (requiere permiso usage.read).
 # start_date obligatorio (yyyyMMdd); end_date opcional e inclusivo (yyyyMMdd).
-# Devuelve la respuesta tal como la entrega la API de OpenAI (buckets por día).
+# Resultados agrupados por API key (group_by=api_key_id). Devuelve buckets por día.
 
 GET {{Veimen_API_HostAddress}}/api/usage/costs?start_date=20260901&end_date=20260930
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -224,7 +224,7 @@ Accept: application/json
 
 ###
 # Usage: consumo de completions de OpenAI en un período (requiere permiso usage.read).
-# Mismos parámetros que /api/usage/costs. Devuelve buckets por día con tokens por resultado.
+# Mismos parámetros que /api/usage/costs. Resultados agrupados por API key (group_by=api_key_id).
 
 GET {{Veimen_API_HostAddress}}/api/usage/completions?start_date=20260901&end_date=20260930
 Authorization: Bearer {{login.response.body.$.accessToken}}

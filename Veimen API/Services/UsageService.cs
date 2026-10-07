@@ -9,9 +9,14 @@ namespace Veimen_API.Services;
 // No usa repositorio: los datos viven en OpenAI, no en la base de datos.
 public class UsageService : IUsageService
 {
-    // Parámetros fijos pedidos a OpenAI: buckets de un día y hasta 365 buckets por página.
+    // Límite máximo de buckets por página que acepta cada endpoint de OpenAI con bucket_width=1d.
+    // La paginación recorre todas las páginas, así que rangos largos se completan igual.
     private const string BucketWidth = "1d";
-    private const int PageLimit = 365;
+    private const int CostsPageLimit = 180;   // /v1/organization/costs: 1..180
+    private const int UsagePageLimit = 31;    // /v1/organization/usage/completions: 1..31
+
+    // Ambos endpoints agrupan por API key: cada bucket devuelve un resultado por api_key_id.
+    private const string GroupBy = "api_key_id";
 
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
@@ -25,12 +30,12 @@ public class UsageService : IUsageService
     }
 
     public Task<OpenAiPage<OpenAiCostResult>> GetCostsAsync(DateTime startDate, DateTime? endDate)
-        => GetAllPagesAsync<OpenAiCostResult>("costs", startDate, endDate);
+        => GetAllPagesAsync<OpenAiCostResult>("costs", CostsPageLimit, startDate, endDate);
 
     public Task<OpenAiPage<OpenAiCompletionsUsageResult>> GetCompletionsUsageAsync(DateTime startDate, DateTime? endDate)
-        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", startDate, endDate);
+        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", UsagePageLimit, startDate, endDate);
 
-    private async Task<OpenAiPage<T>> GetAllPagesAsync<T>(string path, DateTime startDate, DateTime? endDate)
+    private async Task<OpenAiPage<T>> GetAllPagesAsync<T>(string path, int pageLimit, DateTime startDate, DateTime? endDate)
     {
         if (string.IsNullOrWhiteSpace(_adminApiKey))
         {
@@ -45,12 +50,12 @@ public class UsageService : IUsageService
         var startTime = ToUnixSeconds(startDate);
         long? endTime = endDate.HasValue ? ToUnixSeconds(endDate.Value.AddDays(1)) : null;
 
-        // Se recorren todas las páginas de OpenAI para no truncar rangos mayores a PageLimit días.
+        // Se recorren todas las páginas de OpenAI para no truncar rangos mayores a pageLimit días.
         var buckets = new List<OpenAiBucket<T>>();
         string? pageCursor = null;
         do
         {
-            var page = await GetPageAsync<T>(path, startTime, endTime, pageCursor);
+            var page = await GetPageAsync<T>(path, pageLimit, startTime, endTime, pageCursor);
             if (page.Data.Count > 0)
             {
                 buckets.AddRange(page.Data);
@@ -63,9 +68,10 @@ public class UsageService : IUsageService
         return new OpenAiPage<T> { Data = buckets };
     }
 
-    private async Task<OpenAiPage<T>> GetPageAsync<T>(string path, long startTime, long? endTime, string? pageCursor)
+    private async Task<OpenAiPage<T>> GetPageAsync<T>(
+        string path, int pageLimit, long startTime, long? endTime, string? pageCursor)
     {
-        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={PageLimit}";
+        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={pageLimit}&group_by={GroupBy}";
         if (endTime.HasValue)
         {
             query += $"&end_time={endTime.Value}";
