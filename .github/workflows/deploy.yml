@@ -25,10 +25,11 @@ jobs:
         run: dotnet restore "Veimen API/Veimen API.csproj"
 
       - name: Publish
-        run: dotnet publish "Veimen API/Veimen API.csproj" \
-          --configuration Release \
-          --output ./publish \
-          --no-restore
+        run: |
+          dotnet publish "Veimen API/Veimen API.csproj" \
+            --configuration Release \
+            --output ./publish \
+            --no-restore
 
       - name: Deploy to Plesk
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
