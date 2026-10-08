@@ -10,20 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------------------------------------------------
+      # 1. Obtener el código
+      # ---------------------------------------------------------
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
+      # ---------------------------------------------------------
+      # 2. Instalar .NET 10
+      # ---------------------------------------------------------
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
+      # ---------------------------------------------------------
+      # 3. Mostrar versión instalada
+      # ---------------------------------------------------------
       - name: Show .NET version
         run: dotnet --version
 
+      # ---------------------------------------------------------
+      # 4. Restaurar paquetes
+      # ---------------------------------------------------------
       - name: Restore
-        run: dotnet restore "Veimen API/Veimen API.csproj"
+        run: |
+          dotnet restore "Veimen API/Veimen API.csproj"
 
+      # ---------------------------------------------------------
+      # 5. Publicar aplicación
+      # ---------------------------------------------------------
       - name: Publish
         run: |
           dotnet publish "Veimen API/Veimen API.csproj" \
@@ -31,25 +47,42 @@ jobs:
             --output ./publish \
             --no-restore
 
+      # ---------------------------------------------------------
+      # 6. Crear app_offline.htm
+      # ---------------------------------------------------------
       - name: Create app_offline.htm
         run: |
-          mkdir -p ./offline
-          echo "<html><body><h1>Updating application...</h1></body></html>" > ./offline/app_offline.htm
+          echo '<html><head><title>Updating</title></head><body><h1>Application updating...</h1></body></html>' > app_offline.htm
 
+      # ---------------------------------------------------------
+      # 7. Subir app_offline.htm a Plesk
+      # ---------------------------------------------------------
       - name: Put application offline
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_TARGET }}
-          local-dir: ./offline/
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          curl \
+            --fail \
+            --user "$FTP_USERNAME:$FTP_PASSWORD" \
+            --upload-file ./app_offline.htm \
+            "ftp://$FTP_HOST/httpdocs/app_offline.htm"
 
+      # ---------------------------------------------------------
+      # 8. Esperar a que IIS libere los DLL
+      # ---------------------------------------------------------
       - name: Wait for IIS
-        run: sleep 10
+        run: sleep 15
 
-      - name: Deploy application
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+      # ---------------------------------------------------------
+      # 9. Desplegar archivos publicados
+      #
+      # IMPORTANTE:
+      # web.config queda intacto en Plesk.
+      # ---------------------------------------------------------
+      - name: Deploy published files
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -57,14 +90,26 @@ jobs:
           server-dir: ${{ secrets.FTP_TARGET }}
           local-dir: ./publish/
           exclude: |
+            **/web.config
+            **/app_offline.htm
             **/.git*
             **/.git*/**
 
-      - name: Remove app_offline.htm
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_TARGET }}
-          local-dir: ./empty/
+      # ---------------------------------------------------------
+      # 10. Eliminar app_offline.htm
+      #
+      # Al eliminarlo, ASP.NET Core vuelve a iniciar
+      # con la siguiente petición.
+      # ---------------------------------------------------------
+      - name: Bring application back online
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          curl \
+            --fail \
+            --user "$FTP_USERNAME:$FTP_PASSWORD" \
+            "ftp://$FTP_HOST/httpdocs/" \
+            -Q "DELE app_offline.htm"
+
