@@ -1,0 +1,40 @@
+name: Deploy .NET 10 to Plesk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Show .NET version
+        run: dotnet --version
+
+      - name: Restore
+        run: dotnet restore "Code/Veimen API/Veimen API.csproj"
+
+      - name: Publish
+        run: dotnet publish "Code/Veimen API/Veimen API.csproj" \
+          --configuration Release \
+          --output ./publish \
+          --no-restore
+
+      - name: Deploy to Plesk
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_TARGET }}
+          local-dir: ./publish/
