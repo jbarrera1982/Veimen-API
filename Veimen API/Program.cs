@@ -30,6 +30,8 @@ builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<IPromptRepository, PromptRepository>();
 builder.Services.AddScoped<IPromptService, PromptService>();
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IManagedUserRepository, ManagedUserRepository>();
 builder.Services.AddScoped<IProfileRepository, ProfileRepository>();

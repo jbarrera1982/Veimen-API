@@ -41,7 +41,8 @@ public class PromptRepository : IPromptRepository
     {
         var query = $@"
             SELECT {SelectColumns}
-            FROM prompt";
+            FROM prompt
+            WHERE deleted = 0";
 
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<Prompt>(query);
@@ -52,7 +53,7 @@ public class PromptRepository : IPromptRepository
         var query = $@"
             SELECT {SelectColumns}
             FROM prompt
-            WHERE prompt_id = @PromptId";
+            WHERE prompt_id = @PromptId AND deleted = 0";
 
         using var connection = _context.CreateConnection();
         return await connection.QueryFirstOrDefaultAsync<Prompt>(query, new { PromptId = id });
@@ -101,7 +102,7 @@ public class PromptRepository : IPromptRepository
                 updated_by = @UpdatedBy,
                 updated_at = @UpdatedAt,
                 schema_output = @SchemaOutput
-            WHERE prompt_id = @PromptId";
+            WHERE prompt_id = @PromptId AND deleted = 0";
 
         using var connection = _context.CreateConnection();
         var affectedRows = await connection.ExecuteAsync(query, prompt);
@@ -110,7 +111,8 @@ public class PromptRepository : IPromptRepository
 
     public async Task<bool> DeleteAsync(long id)
     {
-        const string query = "DELETE FROM prompt WHERE prompt_id = @PromptId";
+        // Borrado lógico: la fila se marca y deja de devolverse en los GET.
+        const string query = "UPDATE prompt SET deleted = 1 WHERE prompt_id = @PromptId AND deleted = 0";
 
         using var connection = _context.CreateConnection();
         var affectedRows = await connection.ExecuteAsync(query, new { PromptId = id });

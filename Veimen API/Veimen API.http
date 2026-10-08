@@ -171,9 +171,62 @@ Content-Type: application/json
 }
 
 ###
-# Prompts: eliminar
+# Prompts: eliminar (borrado lógico: marca deleted = 1 y deja de devolverse en los GET)
 
 DELETE {{Veimen_API_HostAddress}}/api/prompts/1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+# Clients: lista (requiere permiso clients.read)
+
+GET {{Veimen_API_HostAddress}}/api/clients
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# Clients: detalle
+
+GET {{Veimen_API_HostAddress}}/api/clients/1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# Clients: crear (requiere permiso clients.write)
+
+POST {{Veimen_API_HostAddress}}/api/clients
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Cliente Demo",
+  "inboundEmail": "entrada@cliente.com",
+  "outboundEmail": "salida@cliente.com",
+  "analystEmail": "analista@veimen.net",
+  "openAIApiKey": "sk-...",
+  "active": true
+}
+
+###
+# Clients: actualizar
+
+PUT {{Veimen_API_HostAddress}}/api/clients/1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "clientId": 1,
+  "name": "Cliente Demo",
+  "inboundEmail": "entrada@cliente.com",
+  "outboundEmail": "salida@cliente.com",
+  "analystEmail": "analista@veimen.net",
+  "openAIApiKey": "sk-...",
+  "active": true
+}
+
+###
+# Clients: eliminar (borrado lógico: marca deleted = 1)
+
+DELETE {{Veimen_API_HostAddress}}/api/clients/1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###

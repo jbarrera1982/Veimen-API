@@ -1,6 +1,6 @@
 # AGENTS.md — Veimen API
 
-API REST en ASP.NET Core para Veimen. Gestiona prompts de LLM y autenticación de usuarios con JWT (access + refresh tokens).
+API REST en ASP.NET Core para Veimen. Gestiona prompts de LLM, clientes y autenticación de usuarios con JWT (access + refresh tokens).
 
 ## Stack
 
@@ -15,14 +15,14 @@ API REST en ASP.NET Core para Veimen. Gestiona prompts de LLM y autenticación d
 ```
 Veimen API/            → raíz del repo (solución .slnx, Dockerfile, docker-compose.yml)
 └── Veimen API/        → proyecto web
-    ├── Controllers/         → AuthController, PromptsController, ServiceRequestsController, UsageController
+    ├── Controllers/         → AuthController, PromptsController, ClientsController, ServiceRequestsController, UsageController
     ├── Services/            → lógica de negocio (interfaces I*Service + implementaciones)
     ├── Repositories/        → acceso a datos (interfaces I*Repository + implementaciones Dapper)
     ├── Data/                → DapperContext (factory de conexiones MySQL)
-    ├── Models/              → entidades (Prompt, User, RefreshToken, ServiceRequest) y Dtos/
+    ├── Models/              → entidades (Prompt, Client, User, RefreshToken, ServiceRequest) y Dtos/
     ├── Exceptions/          → excepciones de dominio
     ├── Helpers/             → utilidades compartidas (DateQueryParser: fechas de query en yyyyMMdd)
-    ├── Scripts/             → SQL de creación de tablas (000_*, 001_*), se ejecutan manualmente
+    ├── Scripts/             → SQL de esquema (000_*, 001_*) y cambios posteriores (006_*, 007_*), se ejecutan manualmente
     └── Program.cs           → DI, JWT, CORS, health check en /health
 ```
 
@@ -77,7 +77,8 @@ Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe 
 - `POST /api/auth/login` → devuelve access token JWT (+ refresh token)
 - `POST /api/auth/refresh` → renueva el access token
 - `GET /api/auth/me/permissions` → devuelve `{ profile, permissions }` leídos de los claims del access token del usuario autenticado (los mismos que aplican las policies). El frontend lo consulta al iniciar la app para habilitar/deshabilitar acciones (solo UX; la seguridad real la aplican las policies del backend).
-- `/api/prompts/*` → CRUD de prompts (requiere Bearer + policy `prompts.read` para GET / `prompts.write` para POST-PUT-DELETE)
+- `/api/prompts/*` → CRUD de prompts (requiere Bearer + policy `prompts.read` para GET / `prompts.write` para POST-PUT-DELETE). El **borrado es lógico** (`DELETE` marca `deleted = 1`; los GET filtran `deleted = 0`), igual que en clientes.
+- `/api/clients/*` → CRUD de clientes (requiere Bearer + policy `clients.read` para GET / `clients.write` para POST-PUT-DELETE). Tabla `client` (`client_id`, `name` obligatorio; `inbound_email`, `outbound_email`, `analyst_email`, `openAI_api_key` opcionales; `active`, `deleted`). El borrado es **lógico**: `DELETE /api/clients/{id}` marca `deleted = 1` y los GET filtran `deleted = 0`. Los emails opcionales vacíos se guardan como `NULL` (el modelo los valida con `[EmailAddress]`, y `''` fallaría).
 - `GET /api/ServiceRequests` → lista paginada de service requests (requiere Bearer + policy `service-requests.read`). Filtros opcionales por query string: `start_date`, `end_date` (formato `yyyyMMdd`, rango inclusivo sobre `created_at`), `status` (valor único), `search` (coincidencia exacta sobre `request_number` si el valor es numérico y wildcard/substring sobre `from` y `subject`; los comodines SQL `%`/`_`/`!` del input se escapan, con `!` como carácter de escape de LIKE), `page`/`pageSize`. Devuelve `PagedResult<ServiceRequest>` (items, totalCount, page, pageSize).
 - `GET /api/ServiceRequests/dashboard` → totales agrupados por día (`receipt_date`) y `status` (requiere Bearer + policy `dashboard.read`). Filtros opcionales: `start_date`, `end_date` (formato `yyyyMMdd`, rango inclusivo sobre `receipt_date`); sin fechas devuelve todo el histórico. Devuelve lista plana `{ date, status, total }` ordenada cronológicamente.
 - `GET /api/ServiceRequests/trace` → traza de un requerimiento (requiere Bearer + policy `service-requests.read`). Parámetro obligatorio `request_number` (entero > 0); si es ≤ 0 responde 400. Devuelve lista plana de `ServiceRequestTraceStep` ordenada por `trace_id`. Las columnas JSON (`input_json`, `output_json`) y `confidence` se devuelven como string, por convención del proyecto.
@@ -91,11 +92,12 @@ Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe 
 
 RBAC simple, administrado directamente en BD (no hay CRUD de perfiles): `user.profile_id` → `profile` → `profile_permission` → `permission` (script `002_create_profiles_tables.sql`; los seeds asignan todos los usuarios existentes al perfil Admin).
 
-- Los códigos de permiso viven en `Services/Permissions.cs` (`prompts.read`, `prompts.write`, `service-requests.read`, `dashboard.read`, `tokens.read`, `users.manage`, `usage.read`). Los registros de la tabla `permission` deben coincidir con esas constantes.
+- Los códigos de permiso viven en `Services/Permissions.cs` (`prompts.read`, `prompts.write`, `clients.read`, `clients.write`, `service-requests.read`, `dashboard.read`, `tokens.read`, `users.manage`, `usage.read`). Los registros de la tabla `permission` deben coincidir con esas constantes.
 - `Program.cs` registra una policy por código: `RequireClaim(Permissions.ClaimType /* "perm" */, code)`.
 - `AuthService` carga los permisos del usuario en login/refresh (vía `IPermissionRepository`) y `TokenService` los emite como claims `perm` (+ claim `profile`) en el access token. Como el token vive 15 min, los cambios de permisos en BD aplican al siguiente refresh.
 - Los endpoints se protegen con `[Authorize(Policy = Permissions.Xxx)]` además del `[Authorize]` de clase. Un usuario sin perfil no obtiene claims y recibe 403.
 - Nuevo permiso: agregar la constante en `Permissions.cs`, el registro en la tabla `permission` (script SQL) y el `[Authorize(Policy = ...)]` donde aplique.
+- **Borrado lógico**: `client` y `prompt` tienen columna `deleted` (`006_add_soft_delete.sql`). Los GET filtran `deleted = 0` y `DELETE` ejecuta `UPDATE … SET deleted = 1` (nunca `DELETE FROM`). Al añadir consultas sobre esas tablas, incluir siempre el filtro `deleted = 0`.
 
 ## Notas
 
