@@ -31,7 +31,24 @@ jobs:
             --output ./publish \
             --no-restore
 
-      - name: Deploy to Plesk
+      - name: Create app_offline.htm
+        run: |
+          mkdir -p ./offline
+          echo "<html><body><h1>Updating application...</h1></body></html>" > ./offline/app_offline.htm
+
+      - name: Put application offline
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_TARGET }}
+          local-dir: ./offline/
+
+      - name: Wait for IIS
+        run: sleep 10
+
+      - name: Deploy application
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -39,3 +56,15 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_TARGET }}
           local-dir: ./publish/
+          exclude: |
+            **/.git*
+            **/.git*/**
+
+      - name: Remove app_offline.htm
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_TARGET }}
+          local-dir: ./empty/
