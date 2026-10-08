@@ -11,7 +11,7 @@ jobs:
 
     steps:
       # ---------------------------------------------------------
-      # 1. Obtener el código
+      # 1. Obtener código
       # ---------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -25,20 +25,20 @@ jobs:
           dotnet-version: '10.0.x'
 
       # ---------------------------------------------------------
-      # 3. Mostrar versión instalada
+      # 3. Verificar .NET
       # ---------------------------------------------------------
       - name: Show .NET version
         run: dotnet --version
 
       # ---------------------------------------------------------
-      # 4. Restaurar paquetes
+      # 4. Restore
       # ---------------------------------------------------------
       - name: Restore
         run: |
           dotnet restore "Veimen API/Veimen API.csproj"
 
       # ---------------------------------------------------------
-      # 5. Publicar aplicación
+      # 5. Publish
       # ---------------------------------------------------------
       - name: Publish
         run: |
@@ -55,7 +55,7 @@ jobs:
           echo '<html><head><title>Updating</title></head><body><h1>Application updating...</h1></body></html>' > app_offline.htm
 
       # ---------------------------------------------------------
-      # 7. Subir app_offline.htm a Plesk
+      # 7. Subir app_offline.htm usando FTP
       # ---------------------------------------------------------
       - name: Put application offline
         env:
@@ -63,23 +63,36 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          curl \
-            --fail \
-            --user "$FTP_USERNAME:$FTP_PASSWORD" \
-            --upload-file ./app_offline.htm \
-            "ftp://$FTP_HOST/httpdocs/app_offline.htm"
+          python3 <<'PY'
+          from ftplib import FTP
+          import os
+
+          host = os.environ["FTP_HOST"]
+          username = os.environ["FTP_USERNAME"]
+          password = os.environ["FTP_PASSWORD"]
+
+          ftp = FTP(host, timeout=60)
+          ftp.login(username, password)
+          ftp.cwd("/httpdocs")
+
+          with open("app_offline.htm", "rb") as f:
+              ftp.storbinary("STOR app_offline.htm", f)
+
+          ftp.quit()
+
+          print("app_offline.htm uploaded successfully")
+          PY
 
       # ---------------------------------------------------------
-      # 8. Esperar a que IIS libere los DLL
+      # 8. Esperar a que IIS libere los archivos
       # ---------------------------------------------------------
       - name: Wait for IIS
         run: sleep 15
 
       # ---------------------------------------------------------
-      # 9. Desplegar archivos publicados
+      # 9. Desplegar publicación
       #
-      # IMPORTANTE:
-      # web.config queda intacto en Plesk.
+      # web.config NO se toca.
       # ---------------------------------------------------------
       - name: Deploy published files
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -98,18 +111,34 @@ jobs:
       # ---------------------------------------------------------
       # 10. Eliminar app_offline.htm
       #
-      # Al eliminarlo, ASP.NET Core vuelve a iniciar
-      # con la siguiente petición.
+      # always() garantiza que se intente ejecutar incluso si
+      # el deployment anterior falla.
       # ---------------------------------------------------------
       - name: Bring application back online
+        if: always()
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          curl \
-            --fail \
-            --user "$FTP_USERNAME:$FTP_PASSWORD" \
-            "ftp://$FTP_HOST/httpdocs/" \
-            -Q "DELE app_offline.htm"
+          python3 <<'PY'
+          from ftplib import FTP
+          import os
 
+          host = os.environ["FTP_HOST"]
+          username = os.environ["FTP_USERNAME"]
+          password = os.environ["FTP_PASSWORD"]
+
+          ftp = FTP(host, timeout=60)
+          ftp.login(username, password)
+          ftp.cwd("/httpdocs")
+
+          try:
+              ftp.delete("app_offline.htm")
+              print("app_offline.htm removed successfully")
+          except Exception as e:
+              print(f"Could not remove app_offline.htm: {e}")
+              raise
+
+          ftp.quit()
+          PY
