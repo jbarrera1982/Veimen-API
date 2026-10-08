@@ -22,10 +22,10 @@ jobs:
         run: dotnet --version
 
       - name: Restore
-        run: dotnet restore "Code/Veimen API/Veimen API.csproj"
+        run: dotnet restore "Veimen API/Veimen API.csproj"
 
       - name: Publish
-        run: dotnet publish "Code/Veimen API/Veimen API.csproj" \
+        run: dotnet publish "Veimen API/Veimen API.csproj" \
           --configuration Release \
           --output ./publish \
           --no-restore
