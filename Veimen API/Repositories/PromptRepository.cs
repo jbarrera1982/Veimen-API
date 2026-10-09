@@ -70,13 +70,11 @@ public class PromptRepository : IPromptRepository
                 @Secuence, @Code, @Name, @Description, @AgentGroup, @Type,
                 @LlmModel, @Version, @SystemPrompt, @UserPrompt, @Temperature, @MaxTokens,
                 @Active, @Observations, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt, @SchemaOutput
-            )";
+            );
+            SELECT LAST_INSERT_ID();";
 
-        const string selectIdQuery = "SELECT LAST_INSERT_ID()";
-
-        using var connection = _context.CreateConnection();
-        await connection.ExecuteAsync(insertQuery, prompt);
-        return await connection.QuerySingleAsync<long>(selectIdQuery);
+        using var connection = _context.CreateConnection();        
+        return await connection.QuerySingleAsync<long>(insertQuery, prompt);
     }
 
     public async Task<bool> UpdateAsync(Prompt prompt)

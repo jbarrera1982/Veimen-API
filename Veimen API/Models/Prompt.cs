@@ -59,9 +59,6 @@ public class Prompt
     [Column("max_tokens")]
     public int? MaxTokens { get; set; }
 
-    [Column("active")]
-    public bool? Active { get; set; } = true;
-
     [Column("observations")]
     public string? Observations { get; set; }
 
@@ -81,4 +78,7 @@ public class Prompt
 
     [Column("schema_output")]
     public string? SchemaOutput { get; set; }
+
+    [Column("active")]
+    public bool? Active { get; set; } = true;
 }
