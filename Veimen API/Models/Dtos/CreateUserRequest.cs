@@ -23,4 +23,7 @@ public class CreateUserRequest
 
     [Required]
     public long ProfileId { get; set; }
+
+    // Cliente asociado (client_id). null = sin cliente ("Todos").
+    public int? ClientId { get; set; }
 }

@@ -68,7 +68,8 @@ Content-Type: application/json
 }
 
 ###
-# Users: lista de usuarios (requiere permiso users.manage)
+# Users: lista de usuarios (requiere permiso users.manage).
+# Cada usuario incluye clientId (null = sin cliente) y clientName.
 
 GET {{Veimen_API_HostAddress}}/api/users
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -82,7 +83,8 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
-# Users: crear usuario (el admin asigna el perfil)
+# Users: crear usuario (el admin asigna el perfil y, opcionalmente, el cliente).
+# clientId null = sin cliente ("Todos").
 
 POST {{Veimen_API_HostAddress}}/api/users
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -93,11 +95,13 @@ Content-Type: application/json
   "email": "nuevo@veimen.net",
   "password": "Password123",
   "fullName": "Usuario Nuevo",
-  "profileId": 1
+  "profileId": 1,
+  "clientId": null
 }
 
 ###
-# Users: actualizar perfil, nombre o estado
+# Users: actualizar perfil, nombre, estado o cliente.
+# clientId: se omite = no cambia; 0 = quita el cliente ("Todos"); > 0 = asigna ese cliente.
 
 PATCH {{Veimen_API_HostAddress}}/api/users/1
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -107,7 +111,8 @@ Content-Type: application/json
   "fullName": "Nombre Actualizado",
   "email": "actualizado@veimen.net",
   "profileId": 2,
-  "active": true
+  "active": true,
+  "clientId": 1
 }
 
 ###

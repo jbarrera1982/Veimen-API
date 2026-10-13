@@ -21,6 +21,7 @@ public class UserRepository : IUserRepository
         full_name AS FullName,
         active AS Active,
         profile_id AS ProfileId,
+        client_id AS ClientId,
         created_at AS CreatedAt,
         updated_at AS UpdatedAt,
         last_login_at AS LastLoginAt";
@@ -106,15 +107,15 @@ public class UserRepository : IUserRepository
     {
         const string query = @"
         INSERT INTO user (
-            username, email, password_hash, full_name, active, profile_id, created_at, updated_at
+            username, email, password_hash, full_name, active, profile_id, client_id, created_at, updated_at
         ) VALUES (
-            @Username, @Email, @PasswordHash, @FullName, @Active, @ProfileId, @CreatedAt, @UpdatedAt
+            @Username, @Email, @PasswordHash, @FullName, @Active, @ProfileId, @ClientId, @CreatedAt, @UpdatedAt
         );
         SELECT LAST_INSERT_ID();";
 
         using var connection = _context.CreateConnection();
 
-        // QuerySingleAsync ejecutará ambos comandos y retornará el resultado del SELECT final
+        // QuerySingleAsync ejecutarï¿½ ambos comandos y retornarï¿½ el resultado del SELECT final
         return await connection.QuerySingleAsync<long>(query, new
         {
             user.Username,
@@ -123,6 +124,7 @@ public class UserRepository : IUserRepository
             user.FullName,
             user.Active,
             user.ProfileId,
+            user.ClientId,
             user.CreatedAt,
             user.UpdatedAt,
         });
@@ -163,6 +165,7 @@ public class UserRepository : IUserRepository
                 full_name = @FullName,
                 active = @Active,
                 profile_id = @ProfileId,
+                client_id = @ClientId,
                 updated_at = @UpdatedAt
             WHERE user_id = @UserId";
 
@@ -175,6 +178,7 @@ public class UserRepository : IUserRepository
             FullName = user.FullName,
             Active = user.Active,
             ProfileId = user.ProfileId,
+            ClientId = user.ClientId,
             UpdatedAt = DateTime.UtcNow
         });
         return affectedRows > 0;

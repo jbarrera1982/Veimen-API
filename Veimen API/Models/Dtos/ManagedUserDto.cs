@@ -16,6 +16,10 @@ public class ManagedUserDto
 
     public string? ProfileName { get; set; }
 
+    public int? ClientId { get; set; }
+
+    public string? ClientName { get; set; }
+
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime CreatedAt { get; set; }

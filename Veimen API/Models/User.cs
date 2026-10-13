@@ -35,6 +35,9 @@ public class User
     [Column("profile_id")]
     public long? ProfileId { get; set; }
 
+    [Column("client_id")]
+    public int? ClientId { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 

@@ -12,5 +12,7 @@ public class UserDto
 
     public bool Active { get; set; }
 
+    public int? ClientId { get; set; }
+
     public DateTime? LastLoginAt { get; set; }
 }

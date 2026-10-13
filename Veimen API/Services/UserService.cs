@@ -11,17 +11,20 @@ public class UserService : IUserService
     private readonly IUserRepository _userRepository;
     private readonly IManagedUserRepository _managedUserRepository;
     private readonly IProfileRepository _profileRepository;
+    private readonly IClientRepository _clientRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
 
     public UserService(
         IUserRepository userRepository,
         IManagedUserRepository managedUserRepository,
         IProfileRepository profileRepository,
+        IClientRepository clientRepository,
         IRefreshTokenRepository refreshTokenRepository)
     {
         _userRepository = userRepository;
         _managedUserRepository = managedUserRepository;
         _profileRepository = profileRepository;
+        _clientRepository = clientRepository;
         _refreshTokenRepository = refreshTokenRepository;
     }
 
@@ -55,6 +58,8 @@ public class UserService : IUserService
             throw new AuthException("El perfil indicado no existe.", StatusCodes.Status400BadRequest);
         }
 
+        var clientId = await ResolveClientAsync(request.ClientId);
+
         var user = new User
         {
             Username = username,
@@ -63,6 +68,7 @@ public class UserService : IUserService
             FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim(),
             Active = true,
             ProfileId = request.ProfileId,
+            ClientId = clientId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -88,6 +94,14 @@ public class UserService : IUserService
             }
 
             user.ProfileId = request.ProfileId;
+        }
+
+        if (request.ClientId.HasValue)
+        {
+            // Semántica PATCH: <= 0 quita el cliente; > 0 asigna (y valida que exista).
+            user.ClientId = request.ClientId.Value <= 0
+                ? null
+                : await ResolveClientAsync(request.ClientId);
         }
 
         if (request.Email is not null)
@@ -143,6 +157,23 @@ public class UserService : IUserService
 
         await _userRepository.UpdatePasswordAsync(id, BCrypt.Net.BCrypt.HashPassword(newPassword));
         await _refreshTokenRepository.RevokeAllForUserAsync(id);
+    }
+
+    // Valida y normaliza el cliente asociado: null o <= 0 significa "sin cliente".
+    private async Task<int?> ResolveClientAsync(int? clientId)
+    {
+        if (clientId is null || clientId.Value <= 0)
+        {
+            return null;
+        }
+
+        var client = await _clientRepository.GetByIdAsync(clientId.Value);
+        if (client is null)
+        {
+            throw new AuthException("El cliente indicado no existe.", StatusCodes.Status400BadRequest);
+        }
+
+        return client.ClientId;
     }
 
     private async Task<ManagedUserDto> GetManagedOrThrowAsync(long id)

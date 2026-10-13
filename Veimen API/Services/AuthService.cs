@@ -146,6 +146,7 @@ public class AuthService : IAuthService
             Email = user.Email,
             FullName = user.FullName,
             Active = user.Active,
+            ClientId = user.ClientId,
             LastLoginAt = user.LastLoginAt
         };
     }

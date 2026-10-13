@@ -28,10 +28,13 @@ public class ManagedUserRepository : IManagedUserRepository
                    u.active AS Active,
                    u.profile_id AS ProfileId,
                    p.name AS ProfileName,
+                   u.client_id AS ClientId,
+                   c.name AS ClientName,
                    u.last_login_at AS LastLoginAt,
                    u.created_at AS CreatedAt
             FROM user u
             LEFT JOIN profile p ON p.profile_id = u.profile_id
+            LEFT JOIN `client` c ON c.client_id = u.client_id
             ORDER BY u.active DESC, u.username";
 
         using var connection = _context.CreateConnection();
