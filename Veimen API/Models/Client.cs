@@ -30,9 +30,9 @@ public class Client
     [EmailAddress]
     public string? AnalystEmail { get; set; }
 
-    [Column("openAI_api_key")]
+    [Column("project_id")]
     [MaxLength(100)]
-    public string? OpenAIApiKey { get; set; }
+    public string? ProjectId { get; set; }
 
     [Column("active")]
     public bool Active { get; set; } = true;

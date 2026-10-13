@@ -21,7 +21,7 @@ public class ClientRepository : IClientRepository
         inbound_email AS InboundEmail,
         outbound_email AS OutboundEmail,
         analyst_email AS AnalystEmail,
-        openAI_api_key AS OpenAIApiKey,
+        project_id AS ProjectId,
         active AS Active";
 
     public async Task<IEnumerable<Client>> GetAllAsync()
@@ -51,9 +51,9 @@ public class ClientRepository : IClientRepository
     {
         const string insertQuery = @"
             INSERT INTO `client` (
-                name, inbound_email, outbound_email, analyst_email, openAI_api_key, active
+                name, inbound_email, outbound_email, analyst_email, project_id, active
             ) VALUES (
-                @Name, @InboundEmail, @OutboundEmail, @AnalystEmail, @OpenAIApiKey, @Active
+                @Name, @InboundEmail, @OutboundEmail, @AnalystEmail, @ProjectId, @Active
             );
             SELECT LAST_INSERT_ID();";
         using var connection = _context.CreateConnection();        
@@ -68,7 +68,7 @@ public class ClientRepository : IClientRepository
                 inbound_email = @InboundEmail,
                 outbound_email = @OutboundEmail,
                 analyst_email = @AnalystEmail,
-                openAI_api_key = @OpenAIApiKey,
+                project_id = @ProjectId,
                 active = @Active
             WHERE client_id = @ClientId AND deleted = 0";
 

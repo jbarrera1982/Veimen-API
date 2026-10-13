@@ -52,7 +52,7 @@ public class ClientService : IClientService
         client.InboundEmail = NormalizeOptional(client.InboundEmail);
         client.OutboundEmail = NormalizeOptional(client.OutboundEmail);
         client.AnalystEmail = NormalizeOptional(client.AnalystEmail);
-        client.OpenAIApiKey = NormalizeOptional(client.OpenAIApiKey);
+        client.ProjectId = NormalizeOptional(client.ProjectId);
     }
 
     private static string? NormalizeOptional(string? value)

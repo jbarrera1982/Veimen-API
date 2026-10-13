@@ -207,7 +207,7 @@ Content-Type: application/json
   "inboundEmail": "entrada@cliente.com",
   "outboundEmail": "salida@cliente.com",
   "analystEmail": "analista@veimen.net",
-  "openAIApiKey": "sk-...",
+  "projectId": "proj_...",
   "active": true
 }
 
@@ -224,7 +224,7 @@ Content-Type: application/json
   "inboundEmail": "entrada@cliente.com",
   "outboundEmail": "salida@cliente.com",
   "analystEmail": "analista@veimen.net",
-  "openAIApiKey": "sk-...",
+  "projectId": "proj_...",
   "active": true
 }
 
