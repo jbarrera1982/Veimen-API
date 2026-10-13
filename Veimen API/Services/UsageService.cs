@@ -15,11 +15,12 @@ public class UsageService : IUsageService
     private const int CostsPageLimit = 180;   // /v1/organization/costs: 1..180
     private const int UsagePageLimit = 31;    // /v1/organization/usage/completions: 1..31
 
-    // Agrupación: API key + la dimensión que muestra el frontend (model en
-    // completions, line_item en costs). OpenAI permite combinar group_by; si se
-    // agrupara SOLO por api_key_id, model/line_item llegarían null y se perdería
-    // el desglose actual de los dashboards (todo caería en la fila '—').
-    private const string GroupBy = "api_key_id";
+    // Agrupación: proyecto de OpenAI + la dimensión que muestra el frontend (model
+    // en completions, line_item en costs). Se agrupa por project_id (y no por
+    // api_key_id) para consolidar el uso por proyecto. OpenAI permite combinar
+    // group_by; si se agrupara SOLO por project_id, model/line_item llegarían null
+    // y se perdería el desglose actual de los dashboards (todo caería en la fila '—').
+    private const string GroupBy = "project_id";
     private const string GroupByModel = "model";
     private const string GroupByLineItem = "line_item";
 
