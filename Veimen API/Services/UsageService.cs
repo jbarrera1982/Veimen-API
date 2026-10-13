@@ -35,14 +35,14 @@ public class UsageService : IUsageService
         _adminApiKey = configuration["OpenAI:AdminApiKey"] ?? string.Empty;
     }
 
-    public Task<OpenAiPage<OpenAiCostResult>> GetCostsAsync(DateTime startDate, DateTime? endDate)
-        => GetAllPagesAsync<OpenAiCostResult>("costs", CostsPageLimit, startDate, endDate, GroupBy, GroupByLineItem);
+    public Task<OpenAiPage<OpenAiCostResult>> GetCostsAsync(DateTime startDate, DateTime? endDate, IReadOnlyList<string>? projectIds)
+        => GetAllPagesAsync<OpenAiCostResult>("costs", CostsPageLimit, startDate, endDate, projectIds, GroupBy, GroupByLineItem);
 
-    public Task<OpenAiPage<OpenAiCompletionsUsageResult>> GetCompletionsUsageAsync(DateTime startDate, DateTime? endDate)
-        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", UsagePageLimit, startDate, endDate, GroupBy, GroupByModel);
+    public Task<OpenAiPage<OpenAiCompletionsUsageResult>> GetCompletionsUsageAsync(DateTime startDate, DateTime? endDate, IReadOnlyList<string>? projectIds)
+        => GetAllPagesAsync<OpenAiCompletionsUsageResult>("usage/completions", UsagePageLimit, startDate, endDate, projectIds, GroupBy, GroupByModel);
 
     private async Task<OpenAiPage<T>> GetAllPagesAsync<T>(
-        string path, int pageLimit, DateTime startDate, DateTime? endDate, params string[] groupBy)
+        string path, int pageLimit, DateTime startDate, DateTime? endDate, IReadOnlyList<string>? projectIds, params string[] groupBy)
     {
         if (string.IsNullOrWhiteSpace(_adminApiKey))
         {
@@ -62,7 +62,7 @@ public class UsageService : IUsageService
         string? pageCursor = null;
         do
         {
-            var page = await GetPageAsync<T>(path, pageLimit, startTime, endTime, pageCursor, groupBy);
+            var page = await GetPageAsync<T>(path, pageLimit, startTime, endTime, pageCursor, projectIds, groupBy);
             if (page.Data.Count > 0)
             {
                 buckets.AddRange(page.Data);
@@ -76,11 +76,18 @@ public class UsageService : IUsageService
     }
 
     private async Task<OpenAiPage<T>> GetPageAsync<T>(
-        string path, int pageLimit, long startTime, long? endTime, string? pageCursor, params string[] groupBy)
+        string path, int pageLimit, long startTime, long? endTime, string? pageCursor, IReadOnlyList<string>? projectIds, params string[] groupBy)
     {
         // OpenAI recibe group_by como parámetro repetido (en la doc es un array).
         var groupByQuery = string.Join('&', groupBy.Select(g => $"group_by={g}"));
-        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={pageLimit}&{groupByQuery}";
+        // project_ids también es un array: se envía un parámetro repetido por proyecto.
+        // Si viene vacío no se envía y OpenAI devuelve toda la organización.
+        var projectQuery = projectIds is { Count: > 0 }
+            ? string.Concat(projectIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => $"&project_ids={Uri.EscapeDataString(id)}"))
+            : string.Empty;
+        var query = $"start_time={startTime}&bucket_width={BucketWidth}&limit={pageLimit}&{groupByQuery}{projectQuery}";
         if (endTime.HasValue)
         {
             query += $"&end_time={endTime.Value}";

@@ -36,6 +36,13 @@ public class TokenService
             claims.Add(new(JwtRegisteredClaimNames.Name, user.FullName));
         }
 
+        // Cliente asociado al usuario (si lo tiene): el backend lo usa para restringir
+        // el acceso a datos por cliente, sin depender de lo que envíe el frontend.
+        if (user.ClientId.HasValue)
+        {
+            claims.Add(new(Permissions.ClientClaimType, user.ClientId.Value.ToString()));
+        }
+
         // Perfil y permisos del usuario: las policies validan los claims 'perm'.
         if (!string.IsNullOrWhiteSpace(profile))
         {

@@ -11,6 +11,10 @@ public static class Permissions
     // Tipo de claim del JWT con el nombre del perfil del usuario.
     public const string ProfileClaimType = "profile";
 
+    // Tipo de claim del JWT con el client_id del usuario (si tiene un cliente asociado).
+    // Se usa para restringir el acceso a datos por cliente (p. ej. los proyectos de OpenAI).
+    public const string ClientClaimType = "client_id";
+
     public const string PromptsRead = "prompts.read";
     public const string PromptsWrite = "prompts.write";
     public const string ServiceRequestsRead = "service-requests.read";
