@@ -40,6 +40,7 @@ public class UsageController : ControllerBase
         try
         {
             var result = await _service.GetCostsAsync(startDate!.Value, endDate, effectiveProjectIds);
+            await AttachProjectNamesAsync(result);
             return Ok(result);
         }
         catch (OpenAiException ex)
@@ -66,12 +67,55 @@ public class UsageController : ControllerBase
         try
         {
             var result = await _service.GetCompletionsUsageAsync(startDate!.Value, endDate, effectiveProjectIds);
+            await AttachProjectNamesAsync(result);
             return Ok(result);
         }
         catch (OpenAiException ex)
         {
             return StatusCode(ex.StatusCode, new { message = ex.Message });
         }
+    }
+
+    // Completa `project_name` en cada resultado con el nombre del cliente dueño del proyecto,
+    // resolviéndolo contra la tabla de clientes (no requiere el permiso clients.read del
+    // llamador: lo hace el backend). Si el proyecto no corresponde a ningún cliente, se deja
+    // en null y el frontend cae al project_id.
+    private async Task AttachProjectNamesAsync<T>(OpenAiPage<T> page) where T : IOpenAiProjectResult
+    {
+        var nameByProject = await BuildProjectNameMapAsync();
+        if (nameByProject.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var bucket in page.Data)
+        {
+            foreach (var result in bucket.Results)
+            {
+                var projectId = result.ProjectId?.Trim();
+                if (!string.IsNullOrEmpty(projectId) && nameByProject.TryGetValue(projectId, out var name))
+                {
+                    result.ProjectName = name;
+                }
+            }
+        }
+    }
+
+    private async Task<Dictionary<string, string>> BuildProjectNameMapAsync()
+    {
+        // Comparación sin distinguir mayúsculas: los ids de proyecto vienen de OpenAI y el
+        // admin los carga a mano en clientes. Ante duplicados gana el primero (orden por name).
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var client in await _clientService.GetAllAsync())
+        {
+            var projectId = client.ProjectId?.Trim();
+            var name = client.Name?.Trim();
+            if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(name) && !map.ContainsKey(projectId))
+            {
+                map[projectId] = name;
+            }
+        }
+        return map;
     }
 
     // Restricción por cliente: si el usuario tiene un cliente asociado (claim 'client_id'),

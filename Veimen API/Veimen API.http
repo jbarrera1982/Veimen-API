@@ -283,6 +283,7 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 # start_date obligatorio (yyyyMMdd); end_date opcional e inclusivo (yyyyMMdd).
 # project_ids opcional y repetible (uno por proyecto de OpenAI); si se omite, toda la organización.
 # Un usuario con cliente asociado queda restringido al proyecto de su cliente (se ignora project_ids).
+# Cada results[] incluye project_name (nombre del cliente dueño del proyecto), que agrega el backend.
 # Resultados agrupados por proyecto × line_item (group_by=project_id&group_by=line_item). Devuelve buckets por día.
 
 GET {{Veimen_API_HostAddress}}/api/usage/costs?start_date=20260901&end_date=20260930&project_ids=proj_abc&project_ids=proj_def

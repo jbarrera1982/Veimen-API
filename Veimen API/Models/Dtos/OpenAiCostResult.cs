@@ -4,7 +4,7 @@ namespace Veimen_API.Models.Dtos;
 
 // Resultado de costo dentro de un bucket de la API de OpenAI.
 // Todos los campos son opcionales/nullables según la documentación de OpenAI.
-public class OpenAiCostResult
+public class OpenAiCostResult : IOpenAiProjectResult
 {
     [JsonPropertyName("object")]
     public string Object { get; set; } = "organization.costs.result";
@@ -17,6 +17,10 @@ public class OpenAiCostResult
 
     [JsonPropertyName("project_id")]
     public string? ProjectId { get; set; }
+
+    // No viene de OpenAI: lo completa el backend con el nombre del cliente dueño del proyecto.
+    [JsonPropertyName("project_name")]
+    public string? ProjectName { get; set; }
 
     [JsonPropertyName("api_key_id")]
     public string? ApiKeyId { get; set; }

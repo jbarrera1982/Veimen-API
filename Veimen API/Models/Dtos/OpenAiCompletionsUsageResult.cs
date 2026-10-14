@@ -5,7 +5,7 @@ namespace Veimen_API.Models.Dtos;
 // Resultado de consumo de completions dentro de un bucket de la API de OpenAI
 // (GET /v1/organization/usage/completions). Los campos opcionales son nullables
 // según la documentación de OpenAI.
-public class OpenAiCompletionsUsageResult
+public class OpenAiCompletionsUsageResult : IOpenAiProjectResult
 {
     [JsonPropertyName("object")]
     public string Object { get; set; } = "organization.usage.completions.result";
@@ -30,6 +30,10 @@ public class OpenAiCompletionsUsageResult
 
     [JsonPropertyName("project_id")]
     public string? ProjectId { get; set; }
+
+    // No viene de OpenAI: lo completa el backend con el nombre del cliente dueño del proyecto.
+    [JsonPropertyName("project_name")]
+    public string? ProjectName { get; set; }
 
     [JsonPropertyName("user_id")]
     public string? UserId { get; set; }
