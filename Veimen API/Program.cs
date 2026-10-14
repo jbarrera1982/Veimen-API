@@ -41,6 +41,8 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
+// Typed client: AuditService llama al webhook de n8n (la URL queda oculta al frontend).
+builder.Services.AddHttpClient<IAuditService, AuditService>();
 // Typed client: UsageService llama a la API de OpenAI (no a la base de datos).
 builder.Services.AddHttpClient<IUsageService, UsageService>();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");

@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Veimen_API.Exceptions;
 using Veimen_API.Helpers;
 using Veimen_API.Models;
 using Veimen_API.Models.Dtos;
@@ -15,10 +18,12 @@ public class ServiceRequestsController : ControllerBase
     private const int MaxPageSize = 100;
 
     private readonly IServiceRequestService _service;
+    private readonly IAuditService _auditService;
 
-    public ServiceRequestsController(IServiceRequestService service)
+    public ServiceRequestsController(IServiceRequestService service, IAuditService auditService)
     {
         _service = service;
+        _auditService = auditService;
     }
 
     [HttpGet]
@@ -111,5 +116,31 @@ public class ServiceRequestsController : ControllerBase
 
         var result = await _service.GetTraceAsync(requestNumber);
         return Ok(result);
+    }
+
+    // Dispara el webhook de n8n que genera el informe de auditoría. El frontend ya no
+    // conoce la URL del webhook: la petición entra aquí y el backend la reenvía. El email
+    // del solicitante se toma del access token, no del cliente (no se puede falsificar).
+    [HttpPost("audit")]
+    [Authorize(Policy = Permissions.ServiceRequestsRead)]
+    public async Task<IActionResult> Audit([FromQuery(Name = "request_number")] long requestNumber)
+    {
+        if (requestNumber <= 0)
+        {
+            return BadRequest("El parámetro 'request_number' debe ser mayor a 0.");
+        }
+
+        var email = User.FindFirstValue(JwtRegisteredClaimNames.Email)
+            ?? User.FindFirstValue(ClaimTypes.Email);
+
+        try
+        {
+            await _auditService.RequestAuditAsync(requestNumber, email);
+            return Ok();
+        }
+        catch (WebhookException ex)
+        {
+            return StatusCode(ex.StatusCode, new { message = ex.Message });
+        }
     }
 }

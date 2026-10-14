@@ -272,6 +272,13 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
+# ServiceRequests: solicitar el informe de auditoría (dispara el webhook de n8n desde el backend).
+# El email del solicitante se toma del access token, no se envía por query.
+
+POST {{Veimen_API_HostAddress}}/api/ServiceRequests/audit?request_number=202
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
 # Usage: costos de OpenAI en un período (requiere permiso usage.read).
 # start_date obligatorio (yyyyMMdd); end_date opcional e inclusivo (yyyyMMdd).
 # project_ids opcional y repetible (uno por proyecto de OpenAI); si se omite, toda la organización.
