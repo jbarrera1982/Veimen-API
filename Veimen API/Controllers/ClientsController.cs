@@ -17,8 +17,12 @@ public class ClientsController : ControllerBase
         _service = service;
     }
 
+    // Los GET solo exigen sesión (Bearer): cualquier usuario autenticado puede listar
+    // clientes para poblar el filtro global de cliente del frontend (el módulo de
+    // administración de clientes sigue gobernado por clients.read en el front, y las
+    // escrituras por clients.write abajo). La seguridad real de datos la acotan los
+    // endpoints de negocio (p. ej. UsageController fuerza el proyecto del cliente asociado).
     [HttpGet]
-    [Authorize(Policy = Permissions.ClientsRead)]
     public async Task<ActionResult<IEnumerable<Client>>> GetAll()
     {
         var clients = await _service.GetAllAsync();
@@ -26,7 +30,6 @@ public class ClientsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = Permissions.ClientsRead)]
     public async Task<ActionResult<Client>> GetById(int id)
     {
         var client = await _service.GetByIdAsync(id);

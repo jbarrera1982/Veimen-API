@@ -182,7 +182,8 @@ DELETE {{Veimen_API_HostAddress}}/api/prompts/1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###
-# Clients: lista (requiere permiso clients.read)
+# Clients: lista (solo requiere Bearer: cualquier autenticado puede listar clientes
+# para el filtro global de cliente; ya no exige clients.read)
 
 GET {{Veimen_API_HostAddress}}/api/clients
 Authorization: Bearer {{login.response.body.$.accessToken}}
