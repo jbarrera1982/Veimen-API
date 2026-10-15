@@ -12,6 +12,10 @@ public class ServiceRequestQueryParams
     [FromQuery(Name = "end_date")]
     public string? EndDate { get; set; }
 
+    // Filtro por cliente (service_request.client_id). Ausente = sin filtro ("Todos").
+    [FromQuery(Name = "client_id")]
+    public int? ClientId { get; set; }
+
     [FromQuery(Name = "status")]
     public string? Status { get; set; }
 

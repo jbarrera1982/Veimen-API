@@ -8,9 +8,11 @@ public interface IServiceRequestService
     Task<PagedResult<ServiceRequest>> GetFilteredAsync(
         ServiceRequestQueryParams query, DateTime? startDate, DateTime? endDate);
 
-    Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(DateTime? startDate, DateTime? endDate);
+    Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(
+        DateTime? startDate, DateTime? endDate, int? clientId);
 
-    Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate);
+    Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(
+        DateTime? startDate, DateTime? endDate, int? clientId);
 
     Task<IEnumerable<ServiceRequestTraceStep>> GetTraceAsync(long requestNumber);
 }

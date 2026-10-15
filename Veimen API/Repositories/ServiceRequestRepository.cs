@@ -61,6 +61,12 @@ public class ServiceRequestRepository : IServiceRequestRepository
             parameters.Add("Status", query.Status);
         }
 
+        if (query.ClientId.HasValue)
+        {
+            where.Append(" AND client_id = @ClientId");
+            parameters.Add("ClientId", query.ClientId.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             // Wildcard sobre `from` y `subject` (se escapan %/_/! para tratarlas como substring literal
@@ -103,7 +109,8 @@ public class ServiceRequestRepository : IServiceRequestRepository
         return (items, totalCount);
     }
 
-    public async Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(DateTime? startDate, DateTime? endDate)
+    public async Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(
+        DateTime? startDate, DateTime? endDate, int? clientId)
     {
         // El filtro va sobre receipt_date directo (no DATE(receipt_date)) para no perder el uso de índices.
         var where = new StringBuilder(" WHERE 1 = 1");
@@ -122,6 +129,12 @@ public class ServiceRequestRepository : IServiceRequestRepository
             parameters.Add("EndDateExclusive", endDate.Value.Date.AddDays(1));
         }
 
+        if (clientId.HasValue)
+        {
+            where.Append(" AND client_id = @ClientId");
+            parameters.Add("ClientId", clientId.Value);
+        }
+
         var query = $@"
             SELECT DATE(receipt_date) AS Date,
                    status AS Status,
@@ -135,7 +148,8 @@ public class ServiceRequestRepository : IServiceRequestRepository
         return await connection.QueryAsync<ServiceRequestDashboardRow>(query, parameters);
     }
 
-    public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate)
+    public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(
+        DateTime? startDate, DateTime? endDate, int? clientId)
     {
         // Consumo de tokens por día (end_date de la traza), node y llm_model. Solo nodos LLM.
         // El filtro de fechas va sobre end_date directo (no DATE(end_date)) para no perder el índice;
@@ -154,6 +168,15 @@ public class ServiceRequestRepository : IServiceRequestRepository
             // Cota exclusiva del día siguiente para incluir el día completo de end_date.
             where.Append(" AND end_date < @EndDateExclusive");
             parameters.Add("EndDateExclusive", endDate.Value.Date.AddDays(1));
+        }
+
+        if (clientId.HasValue)
+        {
+            // service_request_trace no tiene client_id: se acota por el requerimiento dueño
+            // del paso (service_request.client_id).
+            where.Append(
+                " AND request_number IN (SELECT request_number FROM service_request WHERE client_id = @ClientId)");
+            parameters.Add("ClientId", clientId.Value);
         }
 
         // SUM() sobre columnas int devuelve DECIMAL en MySQL; el CAST a SIGNED hace que

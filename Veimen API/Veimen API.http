@@ -238,8 +238,9 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 ###
 # ServiceRequests: lista paginada con filtros opcionales.
 # search busca en from y subject (wildcard con escapado) y en request_number (exacto si es numérico).
+# client_id opcional: sin él no se filtra por cliente ("Todos").
 
-GET {{Veimen_API_HostAddress}}/api/ServiceRequests?page=1&pageSize=20&status=Received&search=cliente@empresa&start_date=20260101&end_date=20261231
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests?page=1&pageSize=20&status=Received&search=cliente@empresa&start_date=20260101&end_date=20261231&client_id=1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
@@ -251,17 +252,19 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
-# ServiceRequests: dashboard (totales por día y status, filtros de fecha opcionales)
+# ServiceRequests: dashboard (totales por día y status, filtros de fecha y cliente opcionales)
+# client_id opcional: sin él no se filtra por cliente ("Todos").
 
-GET {{Veimen_API_HostAddress}}/api/ServiceRequests/dashboard?start_date=20260101&end_date=20261231
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests/dashboard?start_date=20260101&end_date=20261231&client_id=1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
 # ServiceRequests: consumo de tokens por día, node y llm_model (requiere permiso tokens.read).
 # Solo nodos LLM. El filtro de fechas se aplica sobre end_date de la traza.
+# client_id opcional: sin él no se filtra por cliente ("Todos").
 
-GET {{Veimen_API_HostAddress}}/api/ServiceRequests/tokens?start_date=20260901&end_date=20260930
+GET {{Veimen_API_HostAddress}}/api/ServiceRequests/tokens?start_date=20260901&end_date=20260930&client_id=1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 

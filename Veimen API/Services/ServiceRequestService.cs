@@ -27,14 +27,16 @@ public class ServiceRequestService : IServiceRequestService
         };
     }
 
-    public async Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(DateTime? startDate, DateTime? endDate)
+    public async Task<IEnumerable<ServiceRequestDashboardRow>> GetDashboardAsync(
+        DateTime? startDate, DateTime? endDate, int? clientId)
     {
-        return await _repository.GetDashboardAsync(startDate, endDate);
+        return await _repository.GetDashboardAsync(startDate, endDate, clientId);
     }
 
-    public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(DateTime? startDate, DateTime? endDate)
+    public async Task<IEnumerable<ServiceRequestTokenUsageRow>> GetTokenUsageAsync(
+        DateTime? startDate, DateTime? endDate, int? clientId)
     {
-        return await _repository.GetTokenUsageAsync(startDate, endDate);
+        return await _repository.GetTokenUsageAsync(startDate, endDate, clientId);
     }
 
     public async Task<IEnumerable<ServiceRequestTraceStep>> GetTraceAsync(long requestNumber)

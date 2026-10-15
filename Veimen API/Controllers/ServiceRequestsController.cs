@@ -66,7 +66,8 @@ public class ServiceRequestsController : ControllerBase
     [Authorize(Policy = Permissions.DashboardRead)]
     public async Task<ActionResult<IEnumerable<ServiceRequestDashboardRow>>> GetDashboard(
         [FromQuery(Name = "start_date")] string? startDateRaw,
-        [FromQuery(Name = "end_date")] string? endDateRaw)
+        [FromQuery(Name = "end_date")] string? endDateRaw,
+        [FromQuery(Name = "client_id")] int? clientId)
     {
         if (!DateQueryParser.TryParse(startDateRaw, out var startDate)
             || !DateQueryParser.TryParse(endDateRaw, out var endDate))
@@ -79,7 +80,7 @@ public class ServiceRequestsController : ControllerBase
             return BadRequest("El parámetro 'start_date' no puede ser posterior a 'end_date'.");
         }
 
-        var result = await _service.GetDashboardAsync(startDate, endDate);
+        var result = await _service.GetDashboardAsync(startDate, endDate, clientId);
         return Ok(result);
     }
 
@@ -87,7 +88,8 @@ public class ServiceRequestsController : ControllerBase
     [Authorize(Policy = Permissions.TokensRead)]
     public async Task<ActionResult<IEnumerable<ServiceRequestTokenUsageRow>>> GetTokenUsage(
         [FromQuery(Name = "start_date")] string? startDateRaw,
-        [FromQuery(Name = "end_date")] string? endDateRaw)
+        [FromQuery(Name = "end_date")] string? endDateRaw,
+        [FromQuery(Name = "client_id")] int? clientId)
     {
         if (!DateQueryParser.TryParse(startDateRaw, out var startDate)
             || !DateQueryParser.TryParse(endDateRaw, out var endDate))
@@ -100,7 +102,7 @@ public class ServiceRequestsController : ControllerBase
             return BadRequest("El parámetro 'start_date' no puede ser posterior a 'end_date'.");
         }
 
-        var result = await _service.GetTokenUsageAsync(startDate, endDate);
+        var result = await _service.GetTokenUsageAsync(startDate, endDate, clientId);
         return Ok(result);
     }
 
