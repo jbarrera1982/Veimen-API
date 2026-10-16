@@ -48,7 +48,10 @@ public class PromptsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        prompt.ClientId = GetAssociatedClientId() ?? prompt.ClientId;
+        if (!TryResolveClientId(prompt))
+        {
+            return BadRequest(ModelState);
+        }
 
         var newId = await _service.CreateAsync(prompt);
         var createdPrompt = await _service.GetByIdAsync(newId);
@@ -76,7 +79,10 @@ public class PromptsController : ControllerBase
             return NotFound();
         }
 
-        prompt.ClientId = GetAssociatedClientId() ?? prompt.ClientId;
+        if (!TryResolveClientId(prompt))
+        {
+            return BadRequest(ModelState);
+        }
 
         var updated = await _service.UpdateAsync(id, prompt);
         if (!updated)
@@ -104,6 +110,21 @@ public class PromptsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+    // Usuario con cliente asociado: el prompt se guarda con su cliente. Sin cliente asociado,
+    // el cliente del body es obligatorio (un prompt siempre pertenece a un cliente).
+    private bool TryResolveClientId(Prompt prompt)
+    {
+        var clientId = GetAssociatedClientId() ?? prompt.ClientId;
+        if (clientId is null or <= 0)
+        {
+            ModelState.AddModelError(nameof(Prompt.ClientId), "El cliente es obligatorio.");
+            return false;
+        }
+
+        prompt.ClientId = clientId;
+        return true;
     }
 
     // Usuario con cliente asociado (claim 'client_id'): solo ve y modifica sus prompts.
