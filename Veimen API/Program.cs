@@ -120,11 +120,34 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    Console.WriteLine(
+        $"HTTP {context.Request.Method} " +
+        $"{context.Request.Path}");
+
+    context.Response.OnStarting(() =>
+    {
+        Console.WriteLine(
+            $"HTTP {context.Request.Method}: " +
+            $"{context.Response.StatusCode}");
+
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// El hosting de producción bloquea PUT/PATCH/DELETE: el frontend los envía como POST con
+// X-HTTP-Method-Override y este middleware restaura el método real antes del enrutado.
+app.UseHttpMethodOverride();
+app.UseRouting();
 
 app.UseCors(FrontendCorsPolicyName);
 app.UseAuthentication();
