@@ -1,3 +1,4 @@
+
 using System.Text;
 using Veimen_API.Data;
 using Veimen_API.Repositories;
@@ -10,24 +11,30 @@ const string FrontendCorsPolicyName = "FrontendPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
-if (string.IsNullOrWhiteSpace(jwtSettings.Secret) || jwtSettings.Secret.Length < 32)
+var jwtSettings = builder.Configuration
+    .GetSection(JwtSettings.SectionName)
+    .Get<JwtSettings>() ?? new JwtSettings();
+
+if (string.IsNullOrWhiteSpace(jwtSettings.Secret) ||
+    jwtSettings.Secret.Length < 32)
 {
     throw new InvalidOperationException(
         "'Jwt:Secret' debe tener al menos 32 caracteres. " +
         "Configúrelo en User Secrets (dev) o en la variable de entorno 'Jwt__Secret' (prod).");
 }
 
-if (string.IsNullOrWhiteSpace(jwtSettings.Issuer) || string.IsNullOrWhiteSpace(jwtSettings.Audience))
+if (string.IsNullOrWhiteSpace(jwtSettings.Issuer) ||
+    string.IsNullOrWhiteSpace(jwtSettings.Audience))
 {
-    throw new InvalidOperationException("'Jwt:Issuer' y 'Jwt:Audience' son obligatorios.");
+    throw new InvalidOperationException(
+        "'Jwt:Issuer' y 'Jwt:Audience' son obligatorios.");
 }
 
-// Add services to the container.
-
+// Servicios
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<DapperContext>();
+
 builder.Services.AddScoped<IPromptRepository, PromptRepository>();
 builder.Services.AddScoped<IPromptService, PromptService>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
@@ -41,12 +48,14 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
-// Typed client: AuditService llama al webhook de n8n (la URL queda oculta al frontend).
-builder.Services.AddHttpClient<IAuditService, AuditService>();
-// Typed client: UsageService llama a la API de OpenAI (no a la base de datos).
-builder.Services.AddHttpClient<IUsageService, UsageService>();
-builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
+builder.Services.AddHttpClient<IAuditService, AuditService>();
+builder.Services.AddHttpClient<IUsageService, UsageService>();
+
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database");
+
+// Autenticación JWT
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -59,13 +68,15 @@ builder.Services
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings.Secret)),
             ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
+
+// Autorización por permisos
 builder.Services.AddAuthorization(options =>
 {
-    // Una policy por permiso: requiere el claim 'perm' con el código correspondiente en el access token.
     foreach (var permission in Permissions.All)
     {
         options.AddPolicy(permission, policy =>
@@ -73,37 +84,48 @@ builder.Services.AddAuthorization(options =>
     }
 });
 
+// CORS
 var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]
-    ?? "http://localhost:4200;http://www.veimen.net;https://www.veimen.net";
+    ?? "http://localhost:4200;http://www.veimen.net;https://www.veimen.net;http://veimen.net;https://veimen.net";
+
+var origins = allowedOrigins
+    .Split(';', StringSplitOptions.RemoveEmptyEntries |
+                StringSplitOptions.TrimEntries)
+    .Select(o => o.Trim().TrimEnd('/'))
+    .Where(o => o.Length > 0)
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
 
 builder.Services.AddCors(options =>
 {
-    var origins = allowedOrigins
-        .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .Select(o => o.TrimEnd('/'))
-        .Where(o => o.Length > 0)
-        .ToArray();
     options.AddPolicy(FrontendCorsPolicyName, policy =>
-        policy.WithOrigins(origins)
+    {
+        policy
+            .WithOrigins(origins)
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod();
+    });
 });
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+// OpenAPI
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
-        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "Token JWT obtenido en POST /api/auth/login"
-        };
+        document.Components.SecuritySchemes ??=
+            new Dictionary<string, IOpenApiSecurityScheme>();
+
+        document.Components.SecuritySchemes["Bearer"] =
+            new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Token JWT obtenido en POST /api/auth/login"
+            };
 
         document.Security ??= new List<OpenApiSecurityRequirement>();
         document.Security.Add(new OpenApiSecurityRequirement
@@ -120,17 +142,17 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
+// Diagnóstico temporal: registrar método, ruta y estado.
+// No registra tokens ni cuerpos de las solicitudes.
 app.Use(async (context, next) =>
 {
     Console.WriteLine(
-        $"HTTP {context.Request.Method} " +
-        $"{context.Request.Path}");
+        $"HTTP {context.Request.Method} {context.Request.Path}");
 
     context.Response.OnStarting(() =>
     {
         Console.WriteLine(
-            $"HTTP {context.Request.Method}: " +
-            $"{context.Response.StatusCode}");
+            $"HTTP {context.Request.Method}: {context.Response.StatusCode}");
 
         return Task.CompletedTask;
     });
@@ -138,23 +160,25 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Configure the HTTP request pipeline.
+// OpenAPI solo en desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// El hosting de producción bloquea PUT/PATCH/DELETE: el frontend los envía como POST con
-// X-HTTP-Method-Override y este middleware restaura el método real antes del enrutado.
-app.UseHttpMethodOverride();
+// Pipeline HTTP
 app.UseRouting();
 
+// CORS debe ejecutarse antes de autenticación y autorización.
 app.UseCors(FrontendCorsPolicyName);
+
+// Conservado para la compatibilidad con el método HTTP override.
+app.UseHttpMethodOverride();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health");
-
 app.MapControllers();
 
 app.Run();
