@@ -35,17 +35,19 @@ public class PromptRepository : IPromptRepository
         created_at AS CreatedAt,
         updated_by AS UpdatedBy,
         updated_at AS UpdatedAt,
-        schema_output AS SchemaOutput";
+        schema_output AS SchemaOutput,
+        client_id AS ClientId";
 
-    public async Task<IEnumerable<Prompt>> GetAllAsync()
+    public async Task<IEnumerable<Prompt>> GetAllAsync(int? clientId)
     {
         var query = $@"
             SELECT {SelectColumns}
             FROM prompt
-            WHERE deleted = 0";
+            WHERE deleted = 0
+              AND (@ClientId IS NULL OR client_id = @ClientId)";
 
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Prompt>(query);
+        return await connection.QueryAsync<Prompt>(query, new { ClientId = clientId });
     }
 
     public async Task<Prompt?> GetByIdAsync(long id)
@@ -65,11 +67,13 @@ public class PromptRepository : IPromptRepository
             INSERT INTO prompt (
                 secuence, code, name, description, agent_group, type,
                 llm_model, version, system_prompt, user_prompt, temperature, max_tokens,
-                active, observations, created_by, created_at, updated_by, updated_at, schema_output
+                active, observations, created_by, created_at, updated_by, updated_at, schema_output,
+                client_id
             ) VALUES (
                 @Secuence, @Code, @Name, @Description, @AgentGroup, @Type,
                 @LlmModel, @Version, @SystemPrompt, @UserPrompt, @Temperature, @MaxTokens,
-                @Active, @Observations, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt, @SchemaOutput
+                @Active, @Observations, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt, @SchemaOutput,
+                @ClientId
             );
             SELECT LAST_INSERT_ID();";
 
@@ -99,7 +103,8 @@ public class PromptRepository : IPromptRepository
                 created_at = @CreatedAt,
                 updated_by = @UpdatedBy,
                 updated_at = @UpdatedAt,
-                schema_output = @SchemaOutput
+                schema_output = @SchemaOutput,
+                client_id = @ClientId
             WHERE prompt_id = @PromptId AND deleted = 0";
 
         using var connection = _context.CreateConnection();

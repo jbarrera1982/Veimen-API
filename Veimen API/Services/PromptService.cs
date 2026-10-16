@@ -12,9 +12,9 @@ public class PromptService : IPromptService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<Prompt>> GetAllAsync()
+    public async Task<IEnumerable<Prompt>> GetAllAsync(int? clientId)
     {
-        return await _repository.GetAllAsync();
+        return await _repository.GetAllAsync(clientId);
     }
 
     public async Task<Prompt?> GetByIdAsync(long id)

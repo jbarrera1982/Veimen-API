@@ -81,4 +81,8 @@ public class Prompt
 
     [Column("active")]
     public bool? Active { get; set; } = true;
+
+    // Cliente dueño del prompt (client_id). null = sin cliente ("Todos").
+    [Column("client_id")]
+    public int? ClientId { get; set; }
 }
