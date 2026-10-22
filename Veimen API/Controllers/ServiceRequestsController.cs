@@ -17,6 +17,9 @@ public class ServiceRequestsController : ControllerBase
 {
     private const int MaxPageSize = 100;
 
+    // Estados destino válidos de una revisión manual (subconjunto de ValidStatuses).
+    private static readonly string[] ReviewStatuses = ["Rejected", "Closed"];
+
     private readonly IServiceRequestService _service;
     private readonly IAuditService _auditService;
 
@@ -144,5 +147,48 @@ public class ServiceRequestsController : ControllerBase
         {
             return StatusCode(ex.StatusCode, new { message = ex.Message });
         }
+    }
+
+    // Revisión manual de un requerimiento 'Pending review': cambia su estado al elegido
+    // (Rejected/Closed) y registra el paso 'Revisión manual' en service_request_trace,
+    // en una única transacción. El estado destino y las observaciones van en el cuerpo.
+    [HttpPost("review")]
+    [Authorize(Policy = Permissions.TraceWrite)]
+    public async Task<ActionResult> Review([FromBody] ReviewServiceRequestRequest request)
+    {
+        if (!ReviewStatuses.Contains(request.Status, StringComparer.Ordinal))
+        {
+            return BadRequest(
+                $"El 'status' no es válido. Valores permitidos: {string.Join(", ", ReviewStatuses)}.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Observations))
+        {
+            return BadRequest("Las 'observations' son obligatorias.");
+        }
+
+        var reviewerName = User.FindFirstValue(ClaimTypes.Name)
+            ?? User.FindFirstValue("unique_name")
+            ?? User.FindFirstValue("name")
+            ?? User.Identity?.Name
+            ?? "Sistema";
+
+        var outcome = await _service.ReviewAsync(
+            request.RequestNumber,
+            request.Status,
+            request.Observations,
+            reviewerName);
+
+        return outcome switch
+        {
+            ReviewOutcome.NotFound => NotFound(
+                new { message = $"El requerimiento {request.RequestNumber} no existe." }),
+            ReviewOutcome.NotPending => Conflict(new
+            {
+                message =
+                    $"El requerimiento {request.RequestNumber} no está pendiente de revisión.",
+            }),
+            _ => NoContent(),
+        };
     }
 }

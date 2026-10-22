@@ -8,7 +8,7 @@ public class ServiceRequest
 {
     // Valores válidos del enum 'status' en MySQL (respetar mayúsculas exactas, ej: 'aNalyzed').
     public static readonly string[] ValidStatuses =
-        ["Received", "Rejected", "Closed", "Awaiting OTP", "Interrupted", "aNalyzed"];
+        ["Received", "Rejected", "Closed", "Awaiting OTP", "Interrupted", "aNalyzed", "Pending review"];
 
     [Column("request_number")]
     [Key]

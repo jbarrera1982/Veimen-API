@@ -15,4 +15,12 @@ public interface IServiceRequestRepository
         DateTime? startDate, DateTime? endDate, int? clientId);
 
     Task<IEnumerable<ServiceRequestTraceStep>> GetTraceAsync(long requestNumber);
+
+    // Revisión manual: en una transacción cambia el estado del requerimiento (solo si está
+    // en 'Pending review') e inserta el paso 'Revisión manual' en service_request_trace.
+    Task<ReviewOutcome> ReviewAsync(
+        long requestNumber,
+        string newStatus,
+        string observations,
+        string reviewerName);
 }

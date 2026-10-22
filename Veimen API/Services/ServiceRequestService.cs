@@ -43,4 +43,13 @@ public class ServiceRequestService : IServiceRequestService
     {
         return await _repository.GetTraceAsync(requestNumber);
     }
+
+    public async Task<ReviewOutcome> ReviewAsync(
+        long requestNumber,
+        string newStatus,
+        string observations,
+        string reviewerName)
+    {
+        return await _repository.ReviewAsync(requestNumber, newStatus, observations.Trim(), reviewerName);
+    }
 }

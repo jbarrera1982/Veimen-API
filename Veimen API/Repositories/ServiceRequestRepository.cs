@@ -1,4 +1,5 @@
 using System.Text;
+using MySqlConnector;
 using Veimen_API.Data;
 using Veimen_API.Models;
 using Veimen_API.Models.Dtos;
@@ -228,5 +229,86 @@ public class ServiceRequestRepository : IServiceRequestRepository
 
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<ServiceRequestTraceStep>(query, new { RequestNumber = requestNumber });
+    }
+
+    public async Task<ReviewOutcome> ReviewAsync(
+        long requestNumber,
+        string newStatus,
+        string observations,
+        string reviewerName)
+    {
+        // CreateConnection() devuelve IDbConnection; los métodos async (OpenAsync,
+        // BeginTransactionAsync) son de MySqlConnection, el tipo concreto que crea el context.
+        using var connection = (MySqlConnection)_context.CreateConnection();
+        await connection.OpenAsync();
+
+        // UPDATE + INSERT en la misma transacción: o se registra todo la revisión o nada.
+        using var transaction = await connection.BeginTransactionAsync();
+
+        // Bloquea la fila del requerimiento para serializar revisiones concurrentes
+        // sobre el mismo request_number (dos revisores simultáneos no podrían pasar
+        // ambos la guarda de 'Pending review').
+        const string statusQuery = @"
+            SELECT status AS Status
+            FROM service_request
+            WHERE request_number = @RequestNumber
+            FOR UPDATE";
+
+        var currentStatus = await connection.QueryFirstOrDefaultAsync<string?>(
+            statusQuery, new { RequestNumber = requestNumber }, transaction);
+
+        if (currentStatus is null)
+        {
+            await transaction.RollbackAsync();
+            return ReviewOutcome.NotFound;
+        }
+
+        if (!string.Equals(currentStatus, "Pending review", StringComparison.Ordinal))
+        {
+            await transaction.RollbackAsync();
+            return ReviewOutcome.NotPending;
+        }
+
+        const string updateStatusQuery = @"
+            UPDATE service_request
+            SET status = @NewStatus,
+                updated_at = UTC_TIMESTAMP(),
+                description = @Description
+            WHERE request_number = @RequestNumber";
+
+        var reviewLabel = string.Equals(newStatus, "Closed", StringComparison.Ordinal)
+            ? "Cerrado"
+            : "Rechazado";
+        var description = $"{reviewLabel} por {reviewerName}";
+
+        await connection.ExecuteAsync(
+            updateStatusQuery,
+            new
+            {
+                NewStatus = newStatus,
+                Description = description,
+                RequestNumber = requestNumber,
+            },
+            transaction);
+
+        // node_type 'MANUAL' (no 'LLM') para que el paso no sume en el dashboard de tokens,
+        // que filtra por node_type = 'LLM'. sequence continúa la numeración lógica del flujo.
+        const string insertTraceQuery = @"
+            INSERT INTO service_request_trace (
+                request_number, node, node_type, status, observations,
+                start_date, end_date, created_at
+            ) VALUES (
+                @RequestNumber,
+                'Revisión manual', 'MANUAL', 'completed', @Observations,
+                UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP()
+            )";
+
+        await connection.ExecuteAsync(
+            insertTraceQuery,
+            new { RequestNumber = requestNumber, Observations = observations },
+            transaction);
+
+        await transaction.CommitAsync();
+        return ReviewOutcome.Success;
     }
 }

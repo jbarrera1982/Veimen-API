@@ -283,6 +283,21 @@ POST {{Veimen_API_HostAddress}}/api/ServiceRequests/audit?request_number=202
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###
+# ServiceRequests: revisión manual de un requerimiento 'Pending review' (requiere permiso trace.write).
+# Cambia el estado del requerimiento a Rejected/Closed y crea el paso 'Revisión manual' en la traza.
+# Errores: 404 si no existe el requerimiento; 409 si no está en estado 'Pending review'.
+
+POST {{Veimen_API_HostAddress}}/api/ServiceRequests/review
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "requestNumber": 202,
+  "status": "Closed",
+  "observations": "Revisado manualmente: el requerimiento corresponde cerrar."
+}
+
+###
 # Usage: costos de OpenAI en un período (requiere permiso usage.read).
 # start_date obligatorio (yyyyMMdd); end_date opcional e inclusivo (yyyyMMdd).
 # project_ids opcional y repetible (uno por proyecto de OpenAI); si se omite, toda la organización.
