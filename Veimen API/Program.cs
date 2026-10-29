@@ -48,6 +48,9 @@ builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
+builder.Services.AddScoped<IMailRepository, MailRepository>();
+builder.Services.AddScoped<IMailScanStateRepository, MailScanStateRepository>();
+builder.Services.AddScoped<IMailService, MailService>();
 
 builder.Services.AddHttpClient<IAuditService, AuditService>();
 builder.Services.AddHttpClient<IUsageService, UsageService>();

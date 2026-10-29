@@ -25,7 +25,8 @@ public static class Permissions
     public const string UsageRead = "usage.read";
     public const string ClientsRead = "clients.read";
     public const string ClientsWrite = "clients.write";
+    public const string MailScan = "mail.scan";
 
     public static readonly string[] All =
-        [PromptsRead, PromptsWrite, ServiceRequestsRead, TraceWrite, DashboardRead, TokensRead, UsersManage, UsageRead, ClientsRead, ClientsWrite];
+        [PromptsRead, PromptsWrite, ServiceRequestsRead, TraceWrite, DashboardRead, TokensRead, UsersManage, UsageRead, ClientsRead, ClientsWrite, MailScan];
 }

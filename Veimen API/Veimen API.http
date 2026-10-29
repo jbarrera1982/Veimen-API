@@ -318,3 +318,29 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
+
+# Mail: escanear correos IMAP (requiere permiso mail.scan)
+# @name mailScan
+POST {{Veimen_API_HostAddress}}/api/mail/scan
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "force": true
+}
+
+###
+
+# Mail: resumen por rango de fechas
+GET {{Veimen_API_HostAddress}}/api/mail/summary?start_date=20260101&end_date=20261231
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+
+# Mail: comparativa mails vs requests por fecha
+GET {{Veimen_API_HostAddress}}/api/mail/comparison?start_date=20260101&end_date=20261231
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
