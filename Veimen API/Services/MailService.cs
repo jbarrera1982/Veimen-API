@@ -114,7 +114,7 @@ public class MailService : IMailService
             
             var mailMessage = new Models.MailMessage
             {
-                ClientId = 1,
+                ClientId = ScanClientId(),
                 Mailbox = MailboxName,
                 Uid = uid,
                 MessageId = message.MessageId,
@@ -162,7 +162,7 @@ public class MailService : IMailService
         return await _mailRepository.GetSummaryAsync(start, end);
     }
 
-    public async Task<IEnumerable<MailComparisonDto>> GetComparisonAsync(string? startDate, string? endDate)
+    public async Task<IEnumerable<MailComparisonDto>> GetComparisonAsync(string? startDate, string? endDate, int? clientId)
     {
         DateOnly? start = null;
         DateOnly? end = null;
@@ -177,6 +177,15 @@ public class MailService : IMailService
             end = DateOnly.FromDateTime(parsedEnd.Value.Date);
         }
 
-        return await _mailRepository.GetComparisonAsync(start, end);
+        return await _mailRepository.GetComparisonAsync(start, end, clientId);
+    }
+
+    // Cliente al que se atribuyen los correos escaneados (config 'Imap:ClientId'): el
+    // buzón configurado pertenece a un cliente. 1 es el valor histórico por defecto.
+    private int ScanClientId()
+    {
+        return int.TryParse(_configuration["Imap:ClientId"], out var clientId) && clientId > 0
+            ? clientId
+            : 1;
     }
 }

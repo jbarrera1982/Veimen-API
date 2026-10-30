@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Veimen_API.Models.Dtos;
@@ -36,9 +37,24 @@ public class MailController : ControllerBase
 
     [HttpGet("comparison")]
     [Authorize(Policy = Permissions.MailScan)]
-    public async Task<ActionResult<IEnumerable<MailComparisonDto>>> GetComparison([FromQuery] string? start_date, [FromQuery] string? end_date)
+    public async Task<ActionResult<IEnumerable<MailComparisonDto>>> GetComparison(
+        [FromQuery] string? start_date,
+        [FromQuery] string? end_date,
+        [FromQuery(Name = "client_id")] int? clientId)
     {
-        var result = await _mailService.GetComparisonAsync(start_date, end_date);
+        // Filtro por cliente: el correo se atribuye a un cliente en mail_message.client_id
+        // y el requerimiento en service_request.client_id. Ausente = "Todos".
+        // Un usuario con cliente asociado (claim 'client_id') solo puede consultar el suyo,
+        // sin importar el client_id que envíe el frontend.
+        var result = await _mailService.GetComparisonAsync(
+            start_date, end_date, GetAssociatedClientId() ?? clientId);
         return Ok(result);
+    }
+
+    // Cliente asociado al usuario autenticado (claim 'client_id'), null si no tiene.
+    private int? GetAssociatedClientId()
+    {
+        var raw = User.FindFirstValue(Permissions.ClientClaimType);
+        return int.TryParse(raw, out var clientId) ? clientId : null;
     }
 }

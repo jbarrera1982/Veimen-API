@@ -107,9 +107,12 @@ public class MailRepository : IMailRepository
         return await connection.QueryAsync<MailDailySummaryDto>(sql, new { StartDate = startDate?.ToDateTime(TimeOnly.MinValue), EndDate = endDate?.ToDateTime(TimeOnly.MinValue) });
     }
 
-    public async Task<IEnumerable<MailComparisonDto>> GetComparisonAsync(DateOnly? startDate, DateOnly? endDate)
+    public async Task<IEnumerable<MailComparisonDto>> GetComparisonAsync(DateOnly? startDate, DateOnly? endDate, int? clientId)
     {
         using var connection = _context.CreateConnection();
+        // El filtro por cliente se aplica en los dos lados: el correo se atribuye al
+        // cliente en mail_message.client_id y el requerimiento en service_request.client_id.
+        // @ClientId nulo = sin filtro ("Todos").
         var sql = @"SELECT 
                         DATE_FORMAT(m.mail_date, '%Y%m%d') AS Date,
                         m.mails AS Mails,
@@ -120,6 +123,7 @@ public class MailRepository : IMailRepository
                             COUNT(1) AS mails
                         FROM 
                             mail_message
+                        WHERE (@ClientId IS NULL OR client_id = @ClientId)
                         GROUP BY 
                             DATE(message_date)
                     ) m
@@ -129,6 +133,7 @@ public class MailRepository : IMailRepository
                             COUNT(1) AS requests	
                         FROM 
                             service_request
+                        WHERE (@ClientId IS NULL OR client_id = @ClientId)
                         GROUP BY 
                             DATE(receipt_date)
                     ) r ON m.mail_date = r.request_date
@@ -144,6 +149,11 @@ public class MailRepository : IMailRepository
         }
         sql += " ORDER BY m.mail_date";
         
-        return await connection.QueryAsync<MailComparisonDto>(sql, new { StartDate = startDate?.ToDateTime(TimeOnly.MinValue), EndDate = endDate?.ToDateTime(TimeOnly.MinValue) });
+        return await connection.QueryAsync<MailComparisonDto>(sql, new
+        {
+            StartDate = startDate?.ToDateTime(TimeOnly.MinValue),
+            EndDate = endDate?.ToDateTime(TimeOnly.MinValue),
+            ClientId = clientId
+        });
     }
 }
