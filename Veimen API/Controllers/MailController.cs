@@ -42,6 +42,10 @@ public class MailController : ControllerBase
         [FromQuery] string? end_date,
         [FromQuery(Name = "client_id")] int? clientId)
     {
+        // Escanear el buzón antes de comparar para que los datos estén actualizados.
+        // Escaneo incremental (sin force): solo procesa los correos nuevos desde el último escaneo.
+        await _mailService.ScanAsync(new MailScanRequest());
+
         // Filtro por cliente: el correo se atribuye a un cliente en mail_message.client_id
         // y el requerimiento en service_request.client_id. Ausente = "Todos".
         // Un usuario con cliente asociado (claim 'client_id') solo puede consultar el suyo,
