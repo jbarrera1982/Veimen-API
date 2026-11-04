@@ -10,3 +10,7 @@ services:
         sync: false  # Configurar manualmente en el dashboard de Render
       - key: Jwt__Secret
         sync: false  # Configurar manualmente en el dashboard de Render
+      - key: Imap__Username
+        sync: false  # Configurar manualmente en el dashboard de Render
+      - key: Imap__Password
+        sync: false  # Configurar manualmente en el dashboard de Render

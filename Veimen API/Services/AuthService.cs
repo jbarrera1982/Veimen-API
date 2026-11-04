@@ -144,6 +144,7 @@ public class AuthService : IAuthService
             UserId = user.UserId,
             Username = user.Username,
             Email = user.Email,
+            Phone = user.Phone,
             FullName = user.FullName,
             Active = user.Active,
             ClientId = user.ClientId,

@@ -84,7 +84,7 @@ Accept: application/json
 
 ###
 # Users: crear usuario (el admin asigna el perfil y, opcionalmente, el cliente).
-# clientId null = sin cliente ("Todos").
+# phone es opcional (null o "" = sin teléfono). clientId null = sin cliente ("Todos").
 
 POST {{Veimen_API_HostAddress}}/api/users
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -94,13 +94,15 @@ Content-Type: application/json
   "username": "usuario_nuevo",
   "email": "nuevo@veimen.net",
   "password": "Password123",
+  "phone": "+54 9 11 5555-1234",
   "fullName": "Usuario Nuevo",
   "profileId": 1,
   "clientId": null
 }
 
 ###
-# Users: actualizar perfil, nombre, estado o cliente.
+# Users: actualizar perfil, nombre, teléfono, estado o cliente.
+# phone: se omite = no cambia; "" = quita el teléfono.
 # clientId: se omite = no cambia; 0 = quita el cliente ("Todos"); > 0 = asigna ese cliente.
 
 PATCH {{Veimen_API_HostAddress}}/api/users/1
@@ -110,6 +112,7 @@ Content-Type: application/json
 {
   "fullName": "Nombre Actualizado",
   "email": "actualizado@veimen.net",
+  "phone": "+54 9 11 5555-1234",
   "profileId": 2,
   "active": true,
   "clientId": 1

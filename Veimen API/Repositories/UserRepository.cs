@@ -17,6 +17,7 @@ public class UserRepository : IUserRepository
         user_id AS UserId,
         username AS Username,
         email AS Email,
+        phone AS Phone,
         password_hash AS PasswordHash,
         full_name AS FullName,
         active AS Active,
@@ -107,9 +108,9 @@ public class UserRepository : IUserRepository
     {
         const string query = @"
         INSERT INTO user (
-            username, email, password_hash, full_name, active, profile_id, client_id, created_at, updated_at
+            username, email, phone, password_hash, full_name, active, profile_id, client_id, created_at, updated_at
         ) VALUES (
-            @Username, @Email, @PasswordHash, @FullName, @Active, @ProfileId, @ClientId, @CreatedAt, @UpdatedAt
+            @Username, @Email, @Phone, @PasswordHash, @FullName, @Active, @ProfileId, @ClientId, @CreatedAt, @UpdatedAt
         );
         SELECT LAST_INSERT_ID();";
 
@@ -120,6 +121,7 @@ public class UserRepository : IUserRepository
         {
             user.Username,
             user.Email,
+            user.Phone,
             user.PasswordHash,
             user.FullName,
             user.Active,
@@ -162,6 +164,7 @@ public class UserRepository : IUserRepository
             UPDATE user
             SET username = @Username,
                 email = @Email,
+                phone = @Phone,
                 full_name = @FullName,
                 active = @Active,
                 profile_id = @ProfileId,
@@ -175,6 +178,7 @@ public class UserRepository : IUserRepository
             UserId = user.UserId,
             Username = user.Username,
             Email = user.Email,
+            Phone = user.Phone,
             FullName = user.FullName,
             Active = user.Active,
             ProfileId = user.ProfileId,

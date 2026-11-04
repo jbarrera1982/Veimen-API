@@ -3,11 +3,15 @@ using Veimen_API.Models;
 using Veimen_API.Models.Dtos;
 using Veimen_API.Repositories;
 using Microsoft.AspNetCore.Http;
+using System.Text.RegularExpressions;
 
 namespace Veimen_API.Services;
 
 public class UserService : IUserService
 {
+    // Teléfono opcional: admite prefijo +, dígitos, espacios, guiones, puntos y paréntesis.
+    private static readonly Regex PhonePattern = new(@"^\+?[0-9\s\-().]{6,30}$", RegexOptions.Compiled);
+
     private readonly IUserRepository _userRepository;
     private readonly IManagedUserRepository _managedUserRepository;
     private readonly IProfileRepository _profileRepository;
@@ -64,6 +68,7 @@ public class UserService : IUserService
         {
             Username = username,
             Email = email,
+            Phone = NormalizePhone(request.Phone),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim(),
             Active = true,
@@ -128,6 +133,11 @@ public class UserService : IUserService
             user.FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim();
         }
 
+        if (request.Phone is not null)
+        {
+            user.Phone = NormalizePhone(request.Phone);
+        }
+
         if (request.Active.HasValue)
         {
             if (id == currentUserId && !request.Active.Value)
@@ -157,6 +167,23 @@ public class UserService : IUserService
 
         await _userRepository.UpdatePasswordAsync(id, BCrypt.Net.BCrypt.HashPassword(newPassword));
         await _refreshTokenRepository.RevokeAllForUserAsync(id);
+    }
+
+    // Valida y normaliza el teléfono: vacío o solo espacios significa "sin teléfono".
+    private static string? NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            return null;
+        }
+
+        var normalized = phone.Trim();
+        if (!PhonePattern.IsMatch(normalized))
+        {
+            throw new AuthException("El teléfono no es válido.", StatusCodes.Status400BadRequest);
+        }
+
+        return normalized;
     }
 
     // Valida y normaliza el cliente asociado: null o <= 0 significa "sin cliente".

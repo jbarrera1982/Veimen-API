@@ -11,6 +11,10 @@ public class UpdateUserRequest
     [MaxLength(150)]
     public string? FullName { get; set; }
 
+    // Semántica PATCH: ausente (null) = no cambia; "" = quita el teléfono.
+    [MaxLength(30)]
+    public string? Phone { get; set; }
+
     public long? ProfileId { get; set; }
 
     public bool? Active { get; set; }

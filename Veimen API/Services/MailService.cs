@@ -30,6 +30,13 @@ public class MailService : IMailService
         var password = _configuration["Imap:Password"] ?? string.Empty;
         var useSsl = bool.Parse(_configuration["Imap:UseSsl"] ?? "true");
 
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException(
+                "Credenciales IMAP no configuradas. Defina 'Imap:Username' y 'Imap:Password' " +
+                "en User Secrets (dev) o en las variables de entorno 'Imap__Username' y 'Imap__Password' (prod).");
+        }
+
         using var client = new ImapClient();
         await client.ConnectAsync(host, port, useSsl);
         await client.AuthenticateAsync(username, password);

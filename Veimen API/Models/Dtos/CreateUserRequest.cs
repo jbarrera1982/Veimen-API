@@ -18,6 +18,10 @@ public class CreateUserRequest
     [MaxLength(100)]
     public string Password { get; set; } = string.Empty;
 
+    // Teléfono de contacto opcional.
+    [MaxLength(30)]
+    public string? Phone { get; set; }
+
     [MaxLength(150)]
     public string? FullName { get; set; }
 

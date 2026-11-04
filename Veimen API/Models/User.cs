@@ -20,6 +20,10 @@ public class User
     [MaxLength(150)]
     public string Email { get; set; } = string.Empty;
 
+    [Column("phone")]
+    [MaxLength(30)]
+    public string? Phone { get; set; }
+
     [Column("password_hash")]
     [Required]
     [MaxLength(100)]

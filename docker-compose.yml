@@ -11,4 +11,10 @@ services:
       - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
       - Jwt__Secret=${JWT_SECRET}
       - OpenAI__AdminApiKey=${OPENAI_ADMIN_KEY}
+      - Imap__Host=${IMAP_HOST:-vda3700.is.cc}
+      - Imap__Port=${IMAP_PORT:-993}
+      - Imap__Username=${IMAP_USERNAME}
+      - Imap__Password=${IMAP_PASSWORD}
+      - Imap__UseSsl=${IMAP_USE_SSL:-true}
+      - Imap__ClientId=${IMAP_CLIENT_ID:-1}
     restart: unless-stopped

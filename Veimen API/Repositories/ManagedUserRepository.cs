@@ -24,6 +24,7 @@ public class ManagedUserRepository : IManagedUserRepository
             SELECT u.user_id AS UserId,
                    u.username AS Username,
                    u.email AS Email,
+                   u.phone AS Phone,
                    u.full_name AS FullName,
                    u.active AS Active,
                    u.profile_id AS ProfileId,

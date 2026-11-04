@@ -55,8 +55,10 @@ No hay proyecto de tests actualmente.
   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=...;Port=3306;Database=...;Uid=...;Pwd=...;" --project "Veimen API"
   dotnet user-secrets set "Jwt:Secret" "clave-aleatoria-de-al-menos-32-caracteres" --project "Veimen API"
   dotnet user-secrets set "OpenAI:AdminApiKey" "sk-admin-..." --project "Veimen API"
+  dotnet user-secrets set "Imap:Username" "usuario@tudominio.com" --project "Veimen API"
+  dotnet user-secrets set "Imap:Password" "contrasena-del-buzon" --project "Veimen API"
   ```
-- **Producción / Docker**: variables de entorno con doble guion bajo (`ConnectionStrings__DefaultConnection`, `Jwt__Secret`, `OpenAI__AdminApiKey`). Se inyectan desde `.env` (copiar `.env.example` → `.env` y completar).
+- **Producción / Docker**: variables de entorno con doble guion bajo (`ConnectionStrings__DefaultConnection`, `Jwt__Secret`, `OpenAI__AdminApiKey`, `Imap__Username`, `Imap__Password`). Se inyectan desde `.env` (copiar `.env.example` → `.env` y completar). Las demás opciones de `Imap` (`Imap__Host`, `Imap__Port`, `Imap__UseSsl`, `Imap__ClientId`) tienen valores por defecto en `MailService`/docker-compose y solo hay que definirlas si difieren.
 
 Reglas validadas al arrancar (`Program.cs`): `Jwt:Secret` es obligatorio y debe tener **≥ 32 caracteres**; `Jwt:Issuer` y `Jwt:Audience` son obligatorios.
 
