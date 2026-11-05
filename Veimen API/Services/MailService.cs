@@ -187,6 +187,16 @@ public class MailService : IMailService
         return await _mailRepository.GetComparisonAsync(start, end, clientId);
     }
 
+    // Cantidad de correos sin requerimiento asociado (badge de Procesamiento).
+    // Escanea antes de contar, igual que GetComparisonAsync, para que el badge
+    // refleje los correos nuevos del buzón.
+    public async Task<MailPendingCountDto> GetPendingCountAsync(int? clientId)
+    {
+        await ScanAsync(new MailScanRequest());
+        var count = await _mailRepository.GetPendingCountAsync(clientId);
+        return new MailPendingCountDto { Count = count };
+    }
+
     // Cliente al que se atribuyen los correos escaneados (config 'Imap:ClientId'): el
     // buzón configurado pertenece a un cliente. 1 es el valor histórico por defecto.
     private int ScanClientId()

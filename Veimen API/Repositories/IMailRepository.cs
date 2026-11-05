@@ -10,6 +10,7 @@ public interface IMailRepository
     Task<IEnumerable<MailDailySummaryDto>> RecalculateSummaryAsync(string mailbox, DateTime startDate, DateTime endDate);
     Task<IEnumerable<MailDailySummaryDto>> GetSummaryAsync(DateOnly? startDate, DateOnly? endDate);
     Task<IEnumerable<MailComparisonDto>> GetComparisonAsync(DateOnly? startDate, DateOnly? endDate, int? clientId);
+    Task<int> GetPendingCountAsync(int? clientId);
     Task<IEnumerable<DateOnly>> GetSummaryDatesInRangeAsync(string mailbox, DateTime startDate, DateTime endDate);
     Task DeleteSummariesByDatesAsync(string mailbox, IEnumerable<DateOnly> dates);
 }

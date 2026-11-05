@@ -347,3 +347,11 @@ Authorization: Bearer {{login.response.body.$.accessToken}}
 Accept: application/json
 
 ###
+
+# Mail: correos sin requerimiento asociado (badge de Procesamiento).
+# client_id opcional: sin él cuenta todos los clientes ("Todos").
+GET {{Veimen_API_HostAddress}}/api/mail/pending-count?client_id=1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###

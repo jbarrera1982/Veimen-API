@@ -7,4 +7,5 @@ public interface IMailService
     Task<IEnumerable<MailDailySummaryDto>> ScanAsync(MailScanRequest request);
     Task<IEnumerable<MailDailySummaryDto>> GetSummaryAsync(string? startDate, string? endDate);
     Task<IEnumerable<MailComparisonDto>> GetComparisonAsync(string? startDate, string? endDate, int? clientId);
+    Task<MailPendingCountDto> GetPendingCountAsync(int? clientId);
 }

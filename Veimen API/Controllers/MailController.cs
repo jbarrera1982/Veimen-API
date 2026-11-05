@@ -55,6 +55,18 @@ public class MailController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("pending-count")]
+    [Authorize(Policy = Permissions.MailScan)]
+    public async Task<ActionResult<MailPendingCountDto>> GetPendingCount(
+        [FromQuery(Name = "client_id")] int? clientId)
+    {
+        // Mismo criterio que GetComparison: un usuario con cliente asociado
+        // (claim 'client_id') solo puede consultar el suyo.
+        var result = await _mailService.GetPendingCountAsync(
+            GetAssociatedClientId() ?? clientId);
+        return Ok(result);
+    }
+
     // Cliente asociado al usuario autenticado (claim 'client_id'), null si no tiene.
     private int? GetAssociatedClientId()
     {

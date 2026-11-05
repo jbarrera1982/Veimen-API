@@ -156,4 +156,19 @@ public class MailRepository : IMailRepository
             ClientId = clientId
         });
     }
+
+    // Correos que todavía no tienen un requerimiento asociado por message_id.
+    // @ClientId nulo = sin filtro ("Todos"). El query es el definido para el badge
+    // de Procesamiento: incluye correos con message_id NULL.
+    public async Task<int> GetPendingCountAsync(int? clientId)
+    {
+        using var connection = _context.CreateConnection();
+        var sql = @"SELECT COUNT(1)
+                    FROM mail_message mm
+                    LEFT JOIN service_request sr ON mm.message_id = sr.message_id
+                    WHERE sr.message_id IS NULL
+                      AND (@ClientId IS NULL OR mm.client_id = @ClientId)";
+
+        return await connection.ExecuteScalarAsync<int>(sql, new { ClientId = clientId });
+    }
 }
