@@ -1,7 +1,9 @@
+using System.Net.Sockets;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
 using MimeKit;
+using Veimen_API.Exceptions;
 using Veimen_API.Helpers;
 using Veimen_API.Models.Dtos;
 using Veimen_API.Repositories;
@@ -22,7 +24,51 @@ public class MailService : IMailService
         _mailScanStateRepository = mailScanStateRepository;
     }
 
+    // El escaneo depende de un servicio externo (IMAP). Si no responde, la API debe
+    // devolver 503/502/504 con un mensaje claro en vez de un 500 genérico.
     public async Task<IEnumerable<MailDailySummaryDto>> ScanAsync(MailScanRequest request)
+    {
+        try
+        {
+            return await ScanCoreAsync(request);
+        }
+        catch (MailException)
+        {
+            throw;
+        }
+        catch (MailKit.Security.AuthenticationException ex)
+        {
+            throw new MailException(
+                "El servidor IMAP rechazó las credenciales configuradas. " +
+                "Verifique 'Imap:Username' y 'Imap:Password'. " +
+                $"Detalle: {ex.Message}",
+                StatusCodes.Status502BadGateway);
+        }
+        catch (ImapProtocolException ex)
+        {
+            throw new MailException(
+                $"El servidor IMAP devolvió una respuesta inválida: {ex.Message}",
+                StatusCodes.Status502BadGateway);
+        }
+        catch (Exception ex) when (ex is SocketException or IOException)
+        {
+            var host = _configuration["Imap:Host"] ?? "vda3700.is.cc";
+            var port = _configuration["Imap:Port"] ?? "993";
+            throw new MailException(
+                $"No se pudo conectar con el servidor IMAP '{host}:{port}'. " +
+                "Verifique que el servicio esté disponible. " +
+                $"Detalle: {ex.Message}",
+                StatusCodes.Status503ServiceUnavailable);
+        }
+        catch (Exception ex) when (ex is TimeoutException or OperationCanceledException)
+        {
+            throw new MailException(
+                "El servidor IMAP no respondió a tiempo (timeout).",
+                StatusCodes.Status504GatewayTimeout);
+        }
+    }
+
+    private async Task<IEnumerable<MailDailySummaryDto>> ScanCoreAsync(MailScanRequest request)
     {
         var host = _configuration["Imap:Host"] ?? "vda3700.is.cc";
         var port = int.Parse(_configuration["Imap:Port"] ?? "993");

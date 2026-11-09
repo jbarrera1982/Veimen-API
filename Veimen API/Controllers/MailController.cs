@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Veimen_API.Exceptions;
 using Veimen_API.Models.Dtos;
 using Veimen_API.Services;
 
@@ -23,8 +24,15 @@ public class MailController : ControllerBase
     public async Task<ActionResult<IEnumerable<MailDailySummaryDto>>> Scan([FromBody] MailScanRequest? request)
     {
         request ??= new MailScanRequest();
-        var result = await _mailService.ScanAsync(request);
-        return Ok(result);
+        try
+        {
+            var result = await _mailService.ScanAsync(request);
+            return Ok(result);
+        }
+        catch (MailException ex)
+        {
+            return StatusCode(ex.StatusCode, new { message = ex.Message });
+        }
     }
 
     [HttpGet("summary")]
@@ -44,15 +52,22 @@ public class MailController : ControllerBase
     {
         // Escanear el buzón antes de comparar para que los datos estén actualizados.
         // Escaneo incremental (sin force): solo procesa los correos nuevos desde el último escaneo.
-        await _mailService.ScanAsync(new MailScanRequest());
+        try
+        {
+            await _mailService.ScanAsync(new MailScanRequest());
 
-        // Filtro por cliente: el correo se atribuye a un cliente en mail_message.client_id
-        // y el requerimiento en service_request.client_id. Ausente = "Todos".
-        // Un usuario con cliente asociado (claim 'client_id') solo puede consultar el suyo,
-        // sin importar el client_id que envíe el frontend.
-        var result = await _mailService.GetComparisonAsync(
-            start_date, end_date, GetAssociatedClientId() ?? clientId);
-        return Ok(result);
+            // Filtro por cliente: el correo se atribuye a un cliente en mail_message.client_id
+            // y el requerimiento en service_request.client_id. Ausente = "Todos".
+            // Un usuario con cliente asociado (claim 'client_id') solo puede consultar el suyo,
+            // sin importar el client_id que envíe el frontend.
+            var result = await _mailService.GetComparisonAsync(
+                start_date, end_date, GetAssociatedClientId() ?? clientId);
+            return Ok(result);
+        }
+        catch (MailException ex)
+        {
+            return StatusCode(ex.StatusCode, new { message = ex.Message });
+        }
     }
 
     [HttpGet("pending-count")]
@@ -62,9 +77,16 @@ public class MailController : ControllerBase
     {
         // Mismo criterio que GetComparison: un usuario con cliente asociado
         // (claim 'client_id') solo puede consultar el suyo.
-        var result = await _mailService.GetPendingCountAsync(
-            GetAssociatedClientId() ?? clientId);
-        return Ok(result);
+        try
+        {
+            var result = await _mailService.GetPendingCountAsync(
+                GetAssociatedClientId() ?? clientId);
+            return Ok(result);
+        }
+        catch (MailException ex)
+        {
+            return StatusCode(ex.StatusCode, new { message = ex.Message });
+        }
     }
 
     // Cliente asociado al usuario autenticado (claim 'client_id'), null si no tiene.
