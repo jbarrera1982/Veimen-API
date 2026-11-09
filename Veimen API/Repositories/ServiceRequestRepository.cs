@@ -17,6 +17,7 @@ public class ServiceRequestRepository : IServiceRequestRepository
         `from` AS `From`,
         subject AS Subject,
         original_message AS OriginalMessage,
+        body_html AS BodyHtml,
         receipt_date AS ReceiptDate,
         n8n_workflow AS N8nWorkflow,
         status AS Status,

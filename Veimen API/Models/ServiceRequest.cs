@@ -31,6 +31,9 @@ public class ServiceRequest
     [Column("original_message")]
     public string? OriginalMessage { get; set; }
 
+    [Column("body_html")]
+    public string? BodyHtml { get; set; }
+
     [Column("receipt_date")]
     public DateTime ReceiptDate { get; set; }
 
