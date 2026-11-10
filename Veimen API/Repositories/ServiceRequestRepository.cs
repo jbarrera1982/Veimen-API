@@ -28,6 +28,7 @@ public class ServiceRequestRepository : IServiceRequestRepository
         otp_code AS OtpCode,
         otp_verified_at AS OtpVerifiedAt,
         detected_intent AS DetectedIntent,
+        language AS Language,
         audited AS Audited,
         suspension_type AS SuspensionType";
 

@@ -72,6 +72,10 @@ public class ServiceRequest
     [MaxLength(100)]
     public string? DetectedIntent { get; set; }
 
+    [Column("language")]
+    [MaxLength(100)]
+    public string? Language { get; set; }
+
     [Column("audited")]
     public bool Audited { get; set; }
 
