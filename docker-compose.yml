@@ -1,20 +1,29 @@
+name: veimen-api
+
 services:
   veimen-api:
     build:
       context: .
       dockerfile: Dockerfile
+    image: veimen-api:latest
     container_name: veimen-api
     ports:
       - "8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
-      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
-      - Jwt__Secret=${JWT_SECRET}
-      - OpenAI__AdminApiKey=${OPENAI_ADMIN_KEY}
-      - Imap__Host=${IMAP_HOST:-vda3700.is.cc}
-      - Imap__Port=${IMAP_PORT:-993}
-      - Imap__Username=${IMAP_USERNAME}
-      - Imap__Password=${IMAP_PASSWORD}
-      - Imap__UseSsl=${IMAP_USE_SSL:-true}
-      - Imap__ClientId=${IMAP_CLIENT_ID:-1}
+      - "ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}"
+      - "ConnectionStrings__DefaultConnection=${CONNECTION_STRING}"
+      - "Jwt__Secret=${JWT_SECRET}"
+      - "Jwt__Issuer=${JWT_ISSUER:-VeimenAPI}"
+      - "Jwt__Audience=${JWT_AUDIENCE:-VeimenAPIClients}"
+      - "Cors__AllowedOrigins=${CORS_ALLOWED_ORIGINS:-http://localhost:4200;http://www.veimen.net;https://www.veimen.net}"
+      - "OpenAI__BaseUrl=${OPENAI_BASE_URL:-https://api.openai.com}"
+      - "OpenAI__AdminApiKey=${OPENAI_ADMIN_KEY}"
+      - "Imap__Host=${IMAP_HOST:-vda3700.is.cc}"
+      - "Imap__Port=${IMAP_PORT:-993}"
+      - "Imap__Username=${IMAP_USERNAME}"
+      - "Imap__Password=${IMAP_PASSWORD}"
+      - "Imap__UseSsl=${IMAP_USE_SSL:-true}"
+      - "Imap__ClientId=${IMAP_CLIENT_ID:-1}"
+      - "N8n__AuditWebhookUrl=${N8N_AUDIT_WEBHOOK_URL:-https://n8n.veimen.net/webhook/auditar-solicitud}"
     restart: unless-stopped
+    stop_grace_period: 15s

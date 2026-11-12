@@ -8,7 +8,7 @@ API REST en ASP.NET Core para Veimen. Gestiona prompts de LLM, clientes y autent
 - **MySQL** vía [MySqlConnector](https://mysqlconnector.net/) + **Dapper** (SQL crudo, sin EF Core ni migraciones)
 - **Autenticación**: JWT Bearer (`Microsoft.AspNetCore.Authentication.JwtBearer`), contraseñas con **BCrypt.Net-Next**
 - **OpenAPI**: `Microsoft.AspNetCore.OpenApi` (solo expuesto en Development)
-- **Despliegue**: Docker (multi-stage `Dockerfile`) + `docker-compose.yml` + `render.yaml`
+- **Despliegue**: Docker (multi-stage `Dockerfile`) + `docker-compose.yml` + `render.yaml`. GitHub Actions: `.github/workflows/deploy.yml` publica por FTP en Plesk y `.github/workflows/docker.yml` construye la imagen con Buildx y la sube a GitHub Container Registry (`ghcr.io/jbarrera1982/veimen-api:latest` y `:sha-<commit>`) en cada push a `master`; no requiere secretos porque usa `GITHUB_TOKEN` con `packages: write`.
 
 ## Estructura
 

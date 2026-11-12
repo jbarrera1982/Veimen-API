@@ -4,15 +4,18 @@
 .vs
 .vscode
 
-# Build results
+# Entorno y secretos (nunca deben entrar al contexto de build)
+.env*
+
+# Resultados de build
 **/bin/
 **/obj/
 
-# User-specific files
+# Archivos específicos del usuario
 *.user
 *.suo
 
-# Test results
+# Resultados de tests
 **/TestResults/
 
 # Docker
@@ -20,7 +23,7 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
-# Documentation
+# Documentación
 *.md
 
 # NuGet
