@@ -85,6 +85,7 @@ Accept: application/json
 ###
 # Users: crear usuario (el admin asigna el perfil y, opcionalmente, el cliente).
 # phone es opcional (null o "" = sin teléfono). clientId null = sin cliente ("Todos").
+# language: "Español" (por defecto si se omite) o "Inglés".
 
 POST {{Veimen_API_HostAddress}}/api/users
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -97,13 +98,15 @@ Content-Type: application/json
   "phone": "+54 9 11 5555-1234",
   "fullName": "Usuario Nuevo",
   "profileId": 1,
-  "clientId": null
+  "clientId": null,
+  "language": "Español"
 }
 
 ###
-# Users: actualizar perfil, nombre, teléfono, estado o cliente.
+# Users: actualizar perfil, nombre, teléfono, estado, cliente o idioma.
 # phone: se omite = no cambia; "" = quita el teléfono.
 # clientId: se omite = no cambia; 0 = quita el cliente ("Todos"); > 0 = asigna ese cliente.
+# language: se omite = no cambia; "Español" o "Inglés" = nuevo idioma.
 
 PATCH {{Veimen_API_HostAddress}}/api/users/1
 Authorization: Bearer {{login.response.body.$.accessToken}}
@@ -115,7 +118,8 @@ Content-Type: application/json
   "phone": "+54 9 11 5555-1234",
   "profileId": 2,
   "active": true,
-  "clientId": 1
+  "clientId": 1,
+  "language": "Inglés"
 }
 
 ###

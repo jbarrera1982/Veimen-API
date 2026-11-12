@@ -22,6 +22,9 @@ public class ManagedUserDto
 
     public string? ClientName { get; set; }
 
+    // Idioma preferido ("Español" por defecto).
+    public string? Language { get; set; }
+
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime CreatedAt { get; set; }

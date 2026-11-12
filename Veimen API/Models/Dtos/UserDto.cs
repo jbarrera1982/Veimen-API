@@ -16,5 +16,8 @@ public class UserDto
 
     public int? ClientId { get; set; }
 
+    // Idioma preferido ("Español" por defecto).
+    public string Language { get; set; } = "Español";
+
     public DateTime? LastLoginAt { get; set; }
 }

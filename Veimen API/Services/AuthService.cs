@@ -148,6 +148,7 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Active = user.Active,
             ClientId = user.ClientId,
+            Language = user.Language,
             LastLoginAt = user.LastLoginAt
         };
     }

@@ -23,6 +23,7 @@ public class UserRepository : IUserRepository
         active AS Active,
         profile_id AS ProfileId,
         client_id AS ClientId,
+        COALESCE(language, 'Español') AS Language,
         created_at AS CreatedAt,
         updated_at AS UpdatedAt,
         last_login_at AS LastLoginAt";
@@ -108,9 +109,9 @@ public class UserRepository : IUserRepository
     {
         const string query = @"
         INSERT INTO user (
-            username, email, phone, password_hash, full_name, active, profile_id, client_id, created_at, updated_at
+            username, email, phone, password_hash, full_name, active, profile_id, client_id, language, created_at, updated_at
         ) VALUES (
-            @Username, @Email, @Phone, @PasswordHash, @FullName, @Active, @ProfileId, @ClientId, @CreatedAt, @UpdatedAt
+            @Username, @Email, @Phone, @PasswordHash, @FullName, @Active, @ProfileId, @ClientId, @Language, @CreatedAt, @UpdatedAt
         );
         SELECT LAST_INSERT_ID();";
 
@@ -127,6 +128,7 @@ public class UserRepository : IUserRepository
             user.Active,
             user.ProfileId,
             user.ClientId,
+            user.Language,
             user.CreatedAt,
             user.UpdatedAt,
         });
@@ -169,6 +171,7 @@ public class UserRepository : IUserRepository
                 active = @Active,
                 profile_id = @ProfileId,
                 client_id = @ClientId,
+                language = @Language,
                 updated_at = @UpdatedAt
             WHERE user_id = @UserId";
 
@@ -183,6 +186,7 @@ public class UserRepository : IUserRepository
             Active = user.Active,
             ProfileId = user.ProfileId,
             ClientId = user.ClientId,
+            Language = user.Language,
             UpdatedAt = DateTime.UtcNow
         });
         return affectedRows > 0;

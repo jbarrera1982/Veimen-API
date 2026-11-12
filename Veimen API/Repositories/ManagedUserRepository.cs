@@ -30,6 +30,7 @@ public class ManagedUserRepository : IManagedUserRepository
                    u.profile_id AS ProfileId,
                    p.name AS ProfileName,
                    u.client_id AS ClientId,
+                   u.language AS Language,
                    c.name AS ClientName,
                    u.last_login_at AS LastLoginAt,
                    u.created_at AS CreatedAt

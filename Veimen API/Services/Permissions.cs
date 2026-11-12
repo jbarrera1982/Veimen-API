@@ -15,6 +15,10 @@ public static class Permissions
     // Se usa para restringir el acceso a datos por cliente (p. ej. los proyectos de OpenAI).
     public const string ClientClaimType = "client_id";
 
+    // Tipo de claim del JWT con el idioma preferido del usuario ("Español"/"Inglés").
+    // El frontend lo consume para toda la aplicación.
+    public const string LanguageClaimType = "language";
+
     public const string PromptsRead = "prompts.read";
     public const string PromptsWrite = "prompts.write";
     public const string ServiceRequestsRead = "service-requests.read";

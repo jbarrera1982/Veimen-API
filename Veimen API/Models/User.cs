@@ -42,6 +42,11 @@ public class User
     [Column("client_id")]
     public int? ClientId { get; set; }
 
+    // Idioma preferido del usuario ("Español" por defecto, o "Inglés").
+    [Column("language")]
+    [MaxLength(100)]
+    public string Language { get; set; } = "Español";
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 

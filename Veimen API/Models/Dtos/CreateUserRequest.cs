@@ -30,4 +30,8 @@ public class CreateUserRequest
 
     // Cliente asociado (client_id). null = sin cliente ("Todos").
     public int? ClientId { get; set; }
+
+    // Idioma preferido: "Español" (por defecto si se omite) o "Inglés".
+    [MaxLength(100)]
+    public string? Language { get; set; }
 }

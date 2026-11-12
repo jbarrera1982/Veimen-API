@@ -12,6 +12,13 @@ public class UserService : IUserService
     // Teléfono opcional: admite prefijo +, dígitos, espacios, guiones, puntos y paréntesis.
     private static readonly Regex PhonePattern = new(@"^\+?[0-9\s\-().]{6,30}$", RegexOptions.Compiled);
 
+    // Idioma por defecto (coincide con el default de la columna user.language).
+    private const string DefaultLanguage = "Español";
+
+    // Idiomas soportados; se guardan en la base con su nombre en español.
+    private const string SpanishLanguage = "Español";
+    private const string EnglishLanguage = "Inglés";
+
     private readonly IUserRepository _userRepository;
     private readonly IManagedUserRepository _managedUserRepository;
     private readonly IProfileRepository _profileRepository;
@@ -74,6 +81,7 @@ public class UserService : IUserService
             Active = true,
             ProfileId = request.ProfileId,
             ClientId = clientId,
+            Language = NormalizeLanguage(request.Language),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -138,6 +146,11 @@ public class UserService : IUserService
             user.Phone = NormalizePhone(request.Phone);
         }
 
+        if (request.Language is not null)
+        {
+            user.Language = NormalizeLanguage(request.Language);
+        }
+
         if (request.Active.HasValue)
         {
             if (id == currentUserId && !request.Active.Value)
@@ -184,6 +197,36 @@ public class UserService : IUserService
         }
 
         return normalized;
+    }
+
+    // Valida y normaliza el idioma: vacío o solo espacios usa el idioma por defecto
+    // ("Español"). Acepta el nombre en español o inglés y los códigos ISO es/en.
+    private static string NormalizeLanguage(string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return DefaultLanguage;
+        }
+
+        var normalized = language.Trim();
+
+        if (normalized.Equals(SpanishLanguage, StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("Espanol", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("es", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("Spanish", StringComparison.OrdinalIgnoreCase))
+        {
+            return SpanishLanguage;
+        }
+
+        if (normalized.Equals(EnglishLanguage, StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("Ingles", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("en", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("English", StringComparison.OrdinalIgnoreCase))
+        {
+            return EnglishLanguage;
+        }
+
+        throw new AuthException("El idioma indicado no es válido.", StatusCodes.Status400BadRequest);
     }
 
     // Valida y normaliza el cliente asociado: null o <= 0 significa "sin cliente".

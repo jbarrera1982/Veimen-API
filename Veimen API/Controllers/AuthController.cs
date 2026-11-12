@@ -117,6 +117,7 @@ public class AuthController : ControllerBase
         return Ok(new UserPermissionsDto
         {
             Profile = User.FindFirstValue(Permissions.ProfileClaimType),
+            Language = User.FindFirstValue(Permissions.LanguageClaimType) ?? "Español",
             Permissions = permissions
         });
     }

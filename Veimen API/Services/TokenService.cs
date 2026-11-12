@@ -36,6 +36,12 @@ public class TokenService
             claims.Add(new(JwtRegisteredClaimNames.Name, user.FullName));
         }
 
+        // Idioma preferido del usuario: viaja en el token para que el frontend lo
+        // tenga disponible en toda la aplicación (igual que perfil y permisos).
+        claims.Add(new(
+            Permissions.LanguageClaimType,
+            string.IsNullOrWhiteSpace(user.Language) ? "Español" : user.Language));
+
         // Cliente asociado al usuario (si lo tiene): el backend lo usa para restringir
         // el acceso a datos por cliente, sin depender de lo que envíe el frontend.
         if (user.ClientId.HasValue)
