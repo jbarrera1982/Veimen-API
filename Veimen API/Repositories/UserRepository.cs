@@ -219,4 +219,18 @@ public class UserRepository : IUserRepository
             new { UserId = id, ProfileId = profileId, UpdatedAt = DateTime.UtcNow });
         return affectedRows > 0;
     }
+
+    public async Task<bool> SetLanguageAsync(long id, string language)
+    {
+        const string query = @"
+            UPDATE user
+            SET language = @Language, updated_at = @UpdatedAt
+            WHERE user_id = @UserId";
+
+        using var connection = _context.CreateConnection();
+        var affectedRows = await connection.ExecuteAsync(
+            query,
+            new { UserId = id, Language = language, UpdatedAt = DateTime.UtcNow });
+        return affectedRows > 0;
+    }
 }

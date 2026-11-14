@@ -88,6 +88,36 @@ public class AuthService : IAuthService
         return ToUserDto(user);
     }
 
+    // Cambia el idioma del propio usuario y reemite el access token con el claim
+    // 'language' actualizado. El refresh token no se toca: la sesión sigue vigente.
+    public async Task<UpdateLanguageResponse> UpdateLanguageAsync(long userId, string language)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user is null || !user.Active)
+        {
+            throw new AuthException("El usuario no existe o está desactivado.", StatusCodes.Status401Unauthorized);
+        }
+
+        var normalized = LanguageCatalog.Normalize(language);
+
+        if (!string.Equals(normalized, user.Language, StringComparison.Ordinal))
+        {
+            user.Language = normalized;
+            await _userRepository.SetLanguageAsync(userId, normalized);
+        }
+
+        var permissions = await _permissionRepository.GetByUserIdAsync(userId);
+        var (accessToken, accessTokenExpiresAt) = _tokenService.GenerateAccessToken(
+            user, permissions?.Profile, permissions?.Permissions);
+
+        return new UpdateLanguageResponse
+        {
+            AccessToken = accessToken,
+            AccessTokenExpiresAt = accessTokenExpiresAt,
+            User = ToUserDto(user)
+        };
+    }
+
     public async Task ChangePasswordAsync(long userId, string currentPassword, string newPassword)
     {
         var user = await _userRepository.GetByIdAsync(userId);

@@ -18,4 +18,5 @@ public interface IUserRepository
     Task<bool> UpdateAsync(User user);
     Task<bool> SetActiveAsync(long id, bool active);
     Task<bool> SetProfileAsync(long id, long? profileId);
+    Task<bool> SetLanguageAsync(long id, string language);
 }

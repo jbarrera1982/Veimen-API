@@ -8,5 +8,6 @@ public interface IAuthService
     Task<AuthResponse> RefreshAsync(string refreshToken, string? ipAddress, string? userAgent);
     Task LogoutAsync(long userId, string refreshToken);
     Task<UserDto> GetMeAsync(long userId);
+    Task<UpdateLanguageResponse> UpdateLanguageAsync(long userId, string language);
     Task ChangePasswordAsync(long userId, string currentPassword, string newPassword);
 }

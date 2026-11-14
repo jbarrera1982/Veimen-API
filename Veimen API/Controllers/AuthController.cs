@@ -123,6 +123,32 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPatch("me/language")]
+    public async Task<ActionResult<UpdateLanguageResponse>> UpdateLanguage(
+        [FromBody] UpdateLanguageRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            return Ok(await _authService.UpdateLanguageAsync(userId.Value, request.Language));
+        }
+        catch (AuthException ex)
+        {
+            return StatusCode(ex.StatusCode, new { message = ex.Message });
+        }
+    }
+
+    [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
