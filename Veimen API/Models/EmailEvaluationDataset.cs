@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Veimen_API.Models;
 
 // Caso de prueba del dataset de evaluación de correos.
-// `case` y `from` son palabras reservadas en MySQL: se citan con backticks en el SQL.
+// `from` es palabra reservada en MySQL: se cita con backticks en el SQL.
 [Table("email_evaluation_dataset")]
 public class EmailEvaluationDataset
 {
@@ -12,12 +12,6 @@ public class EmailEvaluationDataset
     [Column("id")]
     [Key]
     public long Id { get; set; }
-
-    // Nombre del caso: texto libre, editable. Sin restricción de caracteres.
-    [Column("case")]
-    [Required]
-    [MaxLength(255)]
-    public string Case { get; set; } = string.Empty;
 
     [Column("scenario")]
     [Required]

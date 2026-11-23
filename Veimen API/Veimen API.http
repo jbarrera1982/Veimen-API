@@ -214,16 +214,14 @@ Accept: application/json
 ###
 # EmailEvaluationDataset: crear (requiere permiso email-evaluation.write).
 # id: lo asigna la base (autonumérico), no se envía.
-# case: texto libre, obligatorio (máx. 255). from: email válido (máx. 320).
-# scenario: obligatorio (máx. 150). subject: opcional (máx. 500). content: HTML opcional.
-# client_id: obligatorio.
+# from: email válido (máx. 320). scenario: obligatorio (máx. 150).
+# subject: opcional (máx. 500). content: HTML opcional. client_id: obligatorio.
 
 POST {{Veimen_API_HostAddress}}/api/email-evaluation-dataset
 Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "case": "Saldo pendiente - cliente 1",
   "scenario": "Facturación",
   "from": "cliente@empresa.com",
   "subject": "Saldo pendiente",
@@ -232,14 +230,13 @@ Content-Type: application/json
 }
 
 ###
-# EmailEvaluationDataset: actualizar por id (el id va en la ruta; el case puede cambiar)
+# EmailEvaluationDataset: actualizar por id (el id va en la ruta)
 
 PUT {{Veimen_API_HostAddress}}/api/email-evaluation-dataset/1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "case": "Saldo pendiente - actualizado",
   "scenario": "Facturación",
   "from": "cliente@empresa.com",
   "subject": "Saldo pendiente actualizado",

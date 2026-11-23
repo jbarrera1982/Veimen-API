@@ -10,8 +10,8 @@ using Veimen_API.Services;
 
 namespace Veimen_API.Controllers;
 
-// CRUD del dataset de correos de evaluación. La PK es `id` (autonumérica); `case` es un
-// texto libre editable. Cada caso pertenece a un cliente. Un usuario con claim
+// CRUD del dataset de correos de evaluación. La PK es `id` (autonumérica). Cada caso
+// pertenece a un cliente. Un usuario con claim
 // `client_id` solo ve y modifica los casos de su cliente.
 [ApiController]
 [Route("api/email-evaluation-dataset")]

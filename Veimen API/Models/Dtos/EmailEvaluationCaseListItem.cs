@@ -6,8 +6,6 @@ public class EmailEvaluationCaseListItem
 {
     public long Id { get; set; }
 
-    public string Case { get; set; } = string.Empty;
-
     public string Scenario { get; set; } = string.Empty;
 
     public string From { get; set; } = string.Empty;

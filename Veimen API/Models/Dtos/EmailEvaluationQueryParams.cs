@@ -12,7 +12,7 @@ public class EmailEvaluationQueryParams
     [FromQuery(Name = "scenario")]
     public string? Scenario { get; set; }
 
-    // Búsqueda parcial sobre case_id, scenario, from y subject.
+    // Búsqueda parcial sobre scenario, from y subject.
     [FromQuery(Name = "search")]
     public string? Search { get; set; }
 

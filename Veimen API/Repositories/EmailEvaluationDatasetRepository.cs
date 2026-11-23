@@ -15,11 +15,10 @@ public class EmailEvaluationDatasetRepository : IEmailEvaluationDatasetRepositor
         _context = context;
     }
 
-    // Alias explícitos para que Dapper mapee snake_case a PascalCase. `from` y `case` son
-    // palabras reservadas de MySQL y se citan con backticks.
+    // Alias explícitos para que Dapper mapee snake_case a PascalCase. `from` es palabra
+    // reservada de MySQL y se cita con backticks.
     private const string DetailColumns = @"
         id AS Id,
-        `case` AS `Case`,
         scenario AS Scenario,
         `from` AS `From`,
         subject AS Subject,
@@ -32,7 +31,6 @@ public class EmailEvaluationDatasetRepository : IEmailEvaluationDatasetRepositor
 
     private const string ListColumns = @"
         id AS Id,
-        `case` AS `Case`,
         scenario AS Scenario,
         `from` AS `From`,
         subject AS Subject,
@@ -70,8 +68,7 @@ public class EmailEvaluationDatasetRepository : IEmailEvaluationDatasetRepositor
                 .Replace("_", "!_") + "%";
 
             where.Append(@"
-                AND (`case` LIKE @SearchPattern ESCAPE '!'
-                  OR scenario LIKE @SearchPattern ESCAPE '!'
+                AND (scenario LIKE @SearchPattern ESCAPE '!'
                   OR `from` LIKE @SearchPattern ESCAPE '!'
                   OR subject LIKE @SearchPattern ESCAPE '!')");
             parameters.Add("SearchPattern", pattern);
@@ -125,10 +122,10 @@ public class EmailEvaluationDatasetRepository : IEmailEvaluationDatasetRepositor
     {
         const string insert = @"
             INSERT INTO email_evaluation_dataset (
-                `case`, scenario, `from`, subject, content, client_id, deleted,
+                scenario, `from`, subject, content, client_id, deleted,
                 created_at, updated_at, created_by, updated_by
             ) VALUES (
-                @Case, @Scenario, @From, @Subject, @Content, @ClientId, 0,
+                @Scenario, @From, @Subject, @Content, @ClientId, 0,
                 @CreatedAt, @UpdatedAt, @CreatedBy, @UpdatedBy
             )";
 
@@ -141,8 +138,7 @@ public class EmailEvaluationDatasetRepository : IEmailEvaluationDatasetRepositor
     {
         const string query = @"
             UPDATE email_evaluation_dataset
-            SET `case` = @Case,
-                scenario = @Scenario,
+            SET scenario = @Scenario,
                 `from` = @From,
                 subject = @Subject,
                 content = @Content,
