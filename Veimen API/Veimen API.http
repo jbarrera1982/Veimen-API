@@ -189,6 +189,79 @@ DELETE {{Veimen_API_HostAddress}}/api/prompts/1
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
 ###
+# EmailEvaluationDataset: listado paginado (requiere permiso email-evaluation.read).
+# client_id opcional (sin él = "Todos" para usuarios sin cliente asociado).
+# scenario y search son opcionales; pageSize máximo 100.
+
+GET {{Veimen_API_HostAddress}}/api/email-evaluation-dataset?page=1&pageSize=20&client_id=1&scenario=Facturación&search=pendiente
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# EmailEvaluationDataset: escenarios distintos para el filtro del listado
+
+GET {{Veimen_API_HostAddress}}/api/email-evaluation-dataset/scenarios?client_id=1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# EmailEvaluationDataset: detalle por id (incluye el HTML completo en content)
+
+GET {{Veimen_API_HostAddress}}/api/email-evaluation-dataset/1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Accept: application/json
+
+###
+# EmailEvaluationDataset: crear (requiere permiso email-evaluation.write).
+# id: lo asigna la base (autonumérico), no se envía.
+# case: texto libre, obligatorio (máx. 255). from: email válido (máx. 320).
+# scenario: obligatorio (máx. 150). subject: opcional (máx. 500). content: HTML opcional.
+# client_id: obligatorio.
+
+POST {{Veimen_API_HostAddress}}/api/email-evaluation-dataset
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "case": "Saldo pendiente - cliente 1",
+  "scenario": "Facturación",
+  "from": "cliente@empresa.com",
+  "subject": "Saldo pendiente",
+  "content": "<html><body><p>Quiero saber cuánto queda pendiente por pagar.</p></body></html>",
+  "clientId": 1
+}
+
+###
+# EmailEvaluationDataset: actualizar por id (el id va en la ruta; el case puede cambiar)
+
+PUT {{Veimen_API_HostAddress}}/api/email-evaluation-dataset/1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "case": "Saldo pendiente - actualizado",
+  "scenario": "Facturación",
+  "from": "cliente@empresa.com",
+  "subject": "Saldo pendiente actualizado",
+  "content": "<html><body><p>Quiero saber cuánto queda pendiente por pagar.</p></body></html>",
+  "clientId": 1
+}
+
+###
+# EmailEvaluationDataset: eliminar por id (borrado lógico: marca deleted = 1)
+
+DELETE {{Veimen_API_HostAddress}}/api/email-evaluation-dataset/1
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
+# EmailEvaluationDataset: evaluar un caso por id contra el webhook n8n
+# POST /webhook/email-agent con { message_id, receipt_date, from, subject, body, body_html }.
+# Devuelve la respuesta del flujo; no persiste historial.
+
+POST {{Veimen_API_HostAddress}}/api/email-evaluation-dataset/1/evaluate
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+###
 # Clients: lista (solo requiere Bearer: cualquier autenticado puede listar clientes
 # para el filtro global de cliente; ya no exige clients.read)
 

@@ -30,7 +30,9 @@ public static class Permissions
     public const string ClientsRead = "clients.read";
     public const string ClientsWrite = "clients.write";
     public const string MailScan = "mail.scan";
+    public const string EmailEvaluationRead = "email-evaluation.read";
+    public const string EmailEvaluationWrite = "email-evaluation.write";
 
     public static readonly string[] All =
-        [PromptsRead, PromptsWrite, ServiceRequestsRead, TraceWrite, DashboardRead, TokensRead, UsersManage, UsageRead, ClientsRead, ClientsWrite, MailScan];
+        [PromptsRead, PromptsWrite, ServiceRequestsRead, TraceWrite, DashboardRead, TokensRead, UsersManage, UsageRead, ClientsRead, ClientsWrite, MailScan, EmailEvaluationRead, EmailEvaluationWrite];
 }

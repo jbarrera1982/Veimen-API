@@ -51,9 +51,12 @@ builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
 builder.Services.AddScoped<IMailRepository, MailRepository>();
 builder.Services.AddScoped<IMailScanStateRepository, MailScanStateRepository>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IEmailEvaluationDatasetRepository, EmailEvaluationDatasetRepository>();
+builder.Services.AddScoped<IEmailEvaluationDatasetService, EmailEvaluationDatasetService>();
 
 builder.Services.AddHttpClient<IAuditService, AuditService>();
 builder.Services.AddHttpClient<IUsageService, UsageService>();
+builder.Services.AddHttpClient<IEmailEvaluationService, EmailEvaluationService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
