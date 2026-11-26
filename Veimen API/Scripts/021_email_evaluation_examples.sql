@@ -1,0 +1,35 @@
+-- Correos de ejemplo para el dataset de evaluación: un caso por escenario.
+-- Cliente 1 y remitente de prueba para todos los casos. `from` se cita por ser palabra reservada.
+
+INSERT INTO `email_evaluation_dataset` (`scenario`, `from`, `subject`, `content`, `client_id`, `created_by`, `updated_by`)
+VALUES
+    ('Lenguaje inapropiado', 'barrerajc@hotmail.com', 'Queja por atencion recibida',
+     '<p>Estoy harto de que nadie responda. Su servicio es una mierda y el personal son unos inutiles.</p><p>Exijo una respuesta hoy.</p>',
+     1, 'script', 'script'),
+    ('customer_complaint', 'barrerajc@hotmail.com', 'Reclamo por demora en la gestion',
+     '<p>Hace tres semanas envie mi solicitud y nadie me ha contestado. Quiero una explicacion formal y una fecha de respuesta.</p>',
+     1, 'script', 'script'),
+    ('loan_payoff_balance', 'barrerajc@hotmail.com', 'Consulta saldo para cancelar el prestamo',
+     '<p>Buenos dias. Quisiera saber cuanto debo pagar hoy para cancelar totalmente mi prestamo y hasta que fecha es valido ese monto.</p>',
+     1, 'script', 'script'),
+    ('loan_balance', 'barrerajc@hotmail.com', 'Consulta saldo pendiente del prestamo',
+     '<p>Por favor indiquenme cual es el saldo pendiente de mi prestamo a la fecha.</p>',
+     1, 'script', 'script'),
+    ('next_payment_amount', 'barrerajc@hotmail.com', 'Consulta monto de la proxima cuota',
+     '<p>Necesito saber el monto exacto de mi proxima cuota y si incluye intereses y seguros.</p>',
+     1, 'script', 'script'),
+    ('payment_history', 'barrerajc@hotmail.com', 'Solicitud de historial de pagos',
+     '<p>Requiero un detalle de todos los pagos realizados en el ultimo año para mis registros contables.</p>',
+     1, 'script', 'script'),
+    ('payment_date', 'barrerajc@hotmail.com', 'Consulta fecha de vencimiento de cuota',
+     '<p>Quisiera confirmar en que fecha vence mi proxima cuota para programar el pago con mi banco.</p>',
+     1, 'script', 'script'),
+    ('loan_information', 'barrerajc@hotmail.com', 'Solicitud de informacion del prestamo',
+     '<p>Me gustaria recibir la informacion completa de mi prestamo: plazo, tasa de interes y fecha de inicio.</p>',
+     1, 'script', 'script'),
+    ('update_contact_information', 'barrerajc@hotmail.com', 'Actualizacion de datos de contacto',
+     '<p>Les escribo para actualizar mi numero de telefono y mi correo electronico en su sistema. Los nuevos datos son los que aparecen en mi firma.</p>',
+     1, 'script', 'script'),
+    ('general_question', 'barrerajc@hotmail.com', 'Consulta general',
+     '<p>Hola, quisiera saber cual es el horario de atencion de sus oficinas y si atienden los sabados.</p>',
+     1, 'script', 'script');
