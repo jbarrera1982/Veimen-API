@@ -78,7 +78,7 @@ public class EmailEvaluationDatasetRepository : IEmailEvaluationDatasetRepositor
             SELECT {ListColumns}
             FROM email_evaluation_dataset
             {where}
-            ORDER BY created_at DESC, id DESC
+            ORDER BY scenario ASC, created_at DESC, id DESC
             LIMIT @Limit OFFSET @Offset";
 
         var countQuery = $"SELECT COUNT(*) FROM email_evaluation_dataset{where}";
