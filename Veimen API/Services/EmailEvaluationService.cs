@@ -35,7 +35,7 @@ public class EmailEvaluationService : IEmailEvaluationService
         {
             // message_id único por ejecución: permite repetir el mismo caso sin que
             // n8n lo trate como un correo ya procesado.
-            MessageId = $"eval-{dataset.Id}-{Guid.NewGuid():N}",
+            MessageId = $"test-{Guid.NewGuid():N}",
             ReceiptDate = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fffzzz"),
             From = dataset.From,
             Subject = dataset.Subject ?? string.Empty,
